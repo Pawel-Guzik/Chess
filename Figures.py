@@ -266,6 +266,7 @@ class Bishop:
                     if board[bishopLoc[0] - i][bishopLoc[1] + i].color == colors['friendly']:
                         break
                     elif board[bishopLoc[0] - i][bishopLoc[1] + i].color == colors['opponent']:
+
                         possibleMoves.append((bishopLoc[0] - i, bishopLoc[1] + i))
                         break
                 else:
@@ -385,6 +386,7 @@ class Queen:
         possibleMoves = a+b
         return possibleMoves
 
+
 class King:
     def __init__(self, color, x, y):
         self.color = color
@@ -478,3 +480,124 @@ class King:
 
 
         return possibleMoves
+
+
+
+    def isCheck(self, board, location):
+
+
+        # pion goniec kon krol dama wieza
+        if self.color == 'black':
+            colors = {'friendly': 'black', 'opponent': 'white'}
+        else:
+            colors = {'friendly': 'white', 'opponent': 'black'}
+
+        # gora
+        a = 1
+        while location[0] - a != -1:
+            if board[location[0]-a][location[1]] != ' ':
+                if board[location[0]-a][location[1]].color == colors['friendly']:
+                    break
+                else:
+                    if isinstance(board[location[0]-a][location[1]], Rook) or isinstance(board[location[0]-a][location[1]], Queen):
+                        return True
+            a+=1
+
+
+
+
+
+
+        # dol
+        a = 1
+        while location[0] + a != 8:
+            if board[location[0]+a][location[1]] != ' ':
+                if board[location[0]+a][location[1]].color == colors['friendly']:
+                    break
+                else:
+                    if isinstance(board[location[0]+a][location[1]], Rook) or isinstance(board[location[0]+a][location[1]], Queen):
+                        return True
+            a += 1
+
+
+        # lewy skos góra
+        a = 1
+        while location[0] - a != -1 and location[1] - a != -1:
+            if board[location[0] - a][location[1] - a] != ' ':
+                if board[location[0] - a][location[1] - a].color == colors['opponent'] and isinstance(board[location[0] - a][location[1] - a], Pawn) and a == 1:
+                    return True
+
+                if board[location[0] - a][location[1] - a].color == colors['friendly']:
+                    break
+                else:
+                    if isinstance(board[location[0] - a][location[1] - a], Bishop) or isinstance(board[location[0] - a][location[1] - a], Queen):
+                        return True
+            a += 1
+        #prawy skos dół
+        a = 1
+        while location[0] + a != 8 and location[1] + a != 8:
+            print(a)
+            if board[location[0] + a][location[1] + a] != ' ':
+                if board[location[0] + a][location[1] + a].color == colors['opponent'] and isinstance(board[location[0] + a][location[1] + a], Pawn) and a == 1:
+                    return True
+
+                if board[location[0] + a][location[1] + a].color == colors['friendly']:
+                    break
+                else:
+                    if isinstance(board[location[0] + a][location[1] + a], Bishop) or isinstance(board[location[0] + a][location[1] + a], Queen):
+                        return True
+            a += 1
+
+        #lewy skos dół
+        a = 1
+        while location[0] + a != 8 and location[1] - a != -1:
+            if board[location[0] + a][location[1] - a] != ' ':
+                if board[location[0] + a][location[1] - a].color == colors['opponent'] and isinstance(board[location[0] + a][location[1] - a], Pawn) and a == 1:
+                    return True
+
+                if board[location[0] + a][location[1] - a].color == colors['friendly']:
+                    break
+                else:
+                    if isinstance(board[location[0] + a][location[1] - a], Bishop) or isinstance(board[location[0] + a][location[1] - a], Queen):
+                        return True
+            a += 1
+
+        # prawy skos gora
+        a = 1
+        while location[0] - a != -1 and location[1] + a != 8:
+            if board[location[0] - a][location[1] + a] != ' ':
+                if board[location[0] - a][location[1] + a].color == colors['opponent'] and isinstance(board[location[0] - a][location[1] + a], Pawn) and a == 1:
+                    return True
+
+                if board[location[0] - a][location[1] + a].color == colors['friendly']:
+                    break
+                else:
+                    if isinstance(board[location[0] - a][location[1] + a], Bishop) or isinstance(board[location[0] - a][location[1] + a], Queen):
+                        return True
+            a += 1
+
+
+
+
+
+
+
+        return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

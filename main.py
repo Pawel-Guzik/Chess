@@ -1,8 +1,6 @@
 import pygame
 from Figures import Pawn, Rook, Knight, Bishop, Queen, King
 
-
-
 pygame.init()
 
 window = pygame.display.set_mode((720, 720))
@@ -36,10 +34,8 @@ board = [
      white_rooks[1]]
 ]
 
-
 def clickNavi(mouseposition):
     x = y = 0
-    # print(mouseposition)
     for a in range(8):
         if mouseposition[0] >= a * 90 and mouseposition[0] < a * 90 + 90:
             x = a
@@ -51,9 +47,8 @@ def clickNavi(mouseposition):
     return y, x
 
 
-def highlightPossibleMoves(moves):
-    # print(f'Possible Moves {moves}')
 
+def highlightPossibleMoves(moves):
     for x, y in moves:
         if board[x][y] != ' ':
             pass
@@ -89,6 +84,9 @@ def moveFigure():
 
 def redrawBoard(moves):
     squareSize = 90
+
+
+
     for i in range(8):
         for j in range(8):
             if (i + j) % 2 == 0:
@@ -108,7 +106,6 @@ run = True
 move = 'white'
 isDone = False
 locations = {'figure': False, 'field': False}
-
 
 
 possibleMoves = []
@@ -134,6 +131,8 @@ while run:
                     if a == clickLocation:
                         locations['field'] = clickLocation
                         moveFigure()
+                        print('Współrzędne króla', int(black_king.y/90), int(black_king.x/90))
+                        print(black_king.isCheck(board, (int(black_king.y/90), int(black_king.x/90))))
                         possibleMoves = []
 
     redrawBoard(possibleMoves)
