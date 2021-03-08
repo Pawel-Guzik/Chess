@@ -1,9 +1,10 @@
 import pygame
-from Figures import Pawn, Rook, Knight, Bishop, Queen, King
+from Figures import Pawn, Rook, Knight, Bishop, Queen, King, isMoveCorrect
+# from Mechanics import clickNavi, highlightPossibleMoves
+from Window import Window
 
 pygame.init()
-
-window = pygame.display.set_mode((720, 720))
+window = Window()
 
 black_rooks = [Rook('black', 0, 0), Rook('black', 630, 0)]
 black_knight = [Knight('black', 90, 0), Knight('black', 540, 0)]
@@ -19,7 +20,6 @@ white_queen = Queen('white', 270, 630)
 white_king = King('white', 360, 630)
 white_pawns = [Pawn('white', x * 90, 540) for x in range(8)]
 
-print(black_pawns[2])
 
 board = [
     [black_rooks[0], black_knight[0], black_bishop[0], black_queen, black_king, black_bishop[1], black_knight[1],
@@ -47,17 +47,6 @@ def clickNavi(mouseposition):
     return y, x
 
 
-
-def highlightPossibleMoves(moves):
-    for x, y in moves:
-        if board[x][y] != ' ':
-            pass
-        else:
-            pygame.draw.circle(window, (0, 0, 0), (y * 90 + 45, x * 90 + 45), 15)
-
-
-
-
 def moveFigure():
     global locations
     global move
@@ -77,39 +66,21 @@ def moveFigure():
         board[locations['field'][0]][locations['field'][1]] = ' '
 
     (board[locations['figure'][0]][locations['figure'][1]], board[locations['field'][0]][locations['field'][1]]) = (
-    board[locations['field'][0]][locations['field'][1]], board[locations['figure'][0]][locations['figure'][1]])
+        board[locations['field'][0]][locations['field'][1]], board[locations['figure'][0]][locations['figure'][1]])
+
+    moveLoc = [locations['figure'], locations['field']]
 
     locations = {'figure': False, 'field': False}
 
-
-def redrawBoard(moves):
-    squareSize = 90
-
-
-
-    for i in range(8):
-        for j in range(8):
-            if (i + j) % 2 == 0:
-                pygame.draw.rect(window, (200, 200, 200), (i * squareSize, j * squareSize, squareSize, squareSize))
-            else:
-                pygame.draw.rect(window, (50, 50, 50), (i * squareSize, j * squareSize, squareSize, squareSize))
-
-    for a, line in enumerate(board):
-        for b, column in enumerate(line):
-            if board[a][b] != ' ':
-                window.blit(board[a][b].img, (board[a][b].x, board[a][b].y))
-
-    highlightPossibleMoves(moves)
+    return moveLoc
 
 
 run = True
 move = 'white'
 isDone = False
 locations = {'figure': False, 'field': False}
-
-
 possibleMoves = []
-
+moveLoc = {}
 while run:
 
     for event in pygame.event.get():
@@ -122,19 +93,20 @@ while run:
             if board[clickLocation[0]][clickLocation[1]] != ' ':
                 if board[clickLocation[0]][clickLocation[1]].color == move:
                     locations['figure'] = clickLocation
-                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].isMovePossible(locations,
-                                                                                                         board)
-
+                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].isMovePossible(locations,board)
+                    isMoveCorrect(board[locations['figure'][0]][locations['figure'][1]],possibleMoves, locations['figure'], board)
 
             if len(possibleMoves) > 0:
                 for a in possibleMoves:
                     if a == clickLocation:
                         locations['field'] = clickLocation
-                        moveFigure()
-                        print('Współrzędne króla', int(black_king.y/90), int(black_king.x/90))
-                        print(black_king.isCheck(board, (int(black_king.y/90), int(black_king.x/90))))
-                        possibleMoves = []
+                        moveLoc = moveFigure()
 
-    redrawBoard(possibleMoves)
+                        possibleMoves = []
+                        black_king.check = black_king.isCheck(board, (int(black_king.y / 90), int(black_king.x / 90)))
+                        white_king.check = white_king.isCheck(board, (int(white_king.y / 90), int(white_king.x / 90)))
+
+
+    window.drawBoard(possibleMoves, board, locations, moveLoc)
 
     pygame.display.update()

@@ -19,8 +19,6 @@ class Pawn:
 
     def isMovePossible(self, locations, board):
         pawnLoc = locations['figure']
-
-
         possibleMoves = []
 
         if self.color == 'white':
@@ -28,25 +26,23 @@ class Pawn:
             if pawnLoc[0] > 0:
                 # ruch do przodu
                 if board[pawnLoc[0] - 1][pawnLoc[1]] == ' ':
-
                     possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1]))
 
                 # zbicie w prawo
                 if pawnLoc[1] < 7:
                     if board[pawnLoc[0] - 1][pawnLoc[1] + 1] != ' ':
                         if board[pawnLoc[0] - 1][pawnLoc[1] + 1].color == 'black':
-
                             possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] + 1))
 
                 # zbicie w lewo
                 if pawnLoc[1] > 0:
                     if board[pawnLoc[0] - 1][pawnLoc[1] - 1] != ' ':
                         if board[pawnLoc[0] - 1][pawnLoc[1] - 1].color == 'black':
-
                             possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] - 1))
 
 
             #ruch o dwa do przodu
+
                 if self.was_moving is False and board[pawnLoc[0] - 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] - 2][pawnLoc[1]] == ' ':
                     possibleMoves.append((pawnLoc[0] - 2, pawnLoc[1]))
 
@@ -71,7 +67,6 @@ class Pawn:
 
             if self.was_moving is False and board[pawnLoc[0] + 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] + 2][pawnLoc[1]] == ' ':
                 possibleMoves.append((pawnLoc[0] + 2, pawnLoc[1]))
-
 
 
         return possibleMoves
@@ -99,8 +94,8 @@ class Knight:
             colors = {'friendly': 'black', 'opponent': 'white'}
         else:
             colors = {'friendly': 'white', 'opponent': 'black'}
-        print(knightLoc)
-        print('esten')
+
+
 
         # ruchy w lewo dół
 
@@ -170,7 +165,7 @@ class Knight:
 
 
 
-        print(possibleMoves)
+
 
         return possibleMoves
 
@@ -200,10 +195,10 @@ class Bishop:
             colors = {'friendly': 'black', 'opponent': 'white'}
         else:
             colors = {'friendly': 'white', 'opponent': 'black'}
-        print(bishopLoc)
+
 
         if bishopLoc[0] < 7 and bishopLoc[1] > 0:
-            print('lewodol')
+
 
             for i in range(1,8):
                 if bishopLoc[0] + i > 7 or bishopLoc[1] - i < 0:
@@ -223,7 +218,7 @@ class Bishop:
         if bishopLoc[0] > 0 and bishopLoc[1] > 0:
 
             for i in range(1, 8):
-                print('lewogora')
+
                 if bishopLoc[0] - i < 0 or bishopLoc[1] - i < 0:
                     break
 
@@ -240,7 +235,7 @@ class Bishop:
         #ruch w prawo dol
 
         if bishopLoc[0] < 7 and bishopLoc[1] < 7:
-            print('prawodol')
+
             for i in range(1, 8):
                 if bishopLoc[0] + i > 7 or bishopLoc[1] + i > 7:
                     break
@@ -273,13 +268,9 @@ class Bishop:
                     possibleMoves.append((bishopLoc[0] - i, bishopLoc[1] + i))
 
 
-        print(possibleMoves)
+
 
         return possibleMoves
-
-
-
-
 
 
 
@@ -302,7 +293,7 @@ class Rook:
             colors = {'friendly': 'black', 'opponent': 'white'}
         else:
             colors = {'friendly': 'white', 'opponent': 'black'}
-        print(rookLoc)
+
 
         #ruchy w dół
 
@@ -388,6 +379,9 @@ class Queen:
 
 
 class King:
+
+    kings = []
+
     def __init__(self, color, x, y):
         self.color = color
         self.x = x
@@ -398,6 +392,8 @@ class King:
             self.img = pygame.image.load('img/C_Krol.png')
         if color == 'white':
             self.img = pygame.image.load('img/B_Krol.png')
+        self.kings.append(self)
+
 
     def isMovePossible(self, locations, board):
         possibleMoves = []
@@ -482,122 +478,76 @@ class King:
         return possibleMoves
 
 
+    def allMoves(self, board, colors):
+        tab = [Knight, Pawn, Rook, Queen, Bishop]
+        allMoves = []
+
+        for a, line in enumerate(board):
+            for b, value in enumerate(line):
+                try:
+                    for c in tab:
+                        if isinstance(board[a][b], c) and board[a][b].color == colors['opponent']:
+                            locations = {'figure': (a,b), 'field': False}
+                            moves = c.isMovePossible(board[a][b], locations, board)
+                            allMoves += moves
+                            break
+                except:
+                    pass
+
+        return allMoves
+
+
 
     def isCheck(self, board, location):
-
-
-        # pion goniec kon krol dama wieza
         if self.color == 'black':
             colors = {'friendly': 'black', 'opponent': 'white'}
         else:
             colors = {'friendly': 'white', 'opponent': 'black'}
 
-        # gora
-        a = 1
-        while location[0] - a != -1:
-            if board[location[0]-a][location[1]] != ' ':
-                if board[location[0]-a][location[1]].color == colors['friendly']:
-                    break
-                else:
-                    if isinstance(board[location[0]-a][location[1]], Rook) or isinstance(board[location[0]-a][location[1]], Queen):
-                        return True
-            a+=1
+        warMoves = self.allMoves(board, colors)
 
-
-
-
-
-
-        # dol
-        a = 1
-        while location[0] + a != 8:
-            if board[location[0]+a][location[1]] != ' ':
-                if board[location[0]+a][location[1]].color == colors['friendly']:
-                    break
-                else:
-                    if isinstance(board[location[0]+a][location[1]], Rook) or isinstance(board[location[0]+a][location[1]], Queen):
-                        return True
-            a += 1
-
-
-        # lewy skos góra
-        a = 1
-        while location[0] - a != -1 and location[1] - a != -1:
-            if board[location[0] - a][location[1] - a] != ' ':
-                if board[location[0] - a][location[1] - a].color == colors['opponent'] and isinstance(board[location[0] - a][location[1] - a], Pawn) and a == 1:
-                    return True
-
-                if board[location[0] - a][location[1] - a].color == colors['friendly']:
-                    break
-                else:
-                    if isinstance(board[location[0] - a][location[1] - a], Bishop) or isinstance(board[location[0] - a][location[1] - a], Queen):
-                        return True
-            a += 1
-        #prawy skos dół
-        a = 1
-        while location[0] + a != 8 and location[1] + a != 8:
-            print(a)
-            if board[location[0] + a][location[1] + a] != ' ':
-                if board[location[0] + a][location[1] + a].color == colors['opponent'] and isinstance(board[location[0] + a][location[1] + a], Pawn) and a == 1:
-                    return True
-
-                if board[location[0] + a][location[1] + a].color == colors['friendly']:
-                    break
-                else:
-                    if isinstance(board[location[0] + a][location[1] + a], Bishop) or isinstance(board[location[0] + a][location[1] + a], Queen):
-                        return True
-            a += 1
-
-        #lewy skos dół
-        a = 1
-        while location[0] + a != 8 and location[1] - a != -1:
-            if board[location[0] + a][location[1] - a] != ' ':
-                if board[location[0] + a][location[1] - a].color == colors['opponent'] and isinstance(board[location[0] + a][location[1] - a], Pawn) and a == 1:
-                    return True
-
-                if board[location[0] + a][location[1] - a].color == colors['friendly']:
-                    break
-                else:
-                    if isinstance(board[location[0] + a][location[1] - a], Bishop) or isinstance(board[location[0] + a][location[1] - a], Queen):
-                        return True
-            a += 1
-
-        # prawy skos gora
-        a = 1
-        while location[0] - a != -1 and location[1] + a != 8:
-            if board[location[0] - a][location[1] + a] != ' ':
-                if board[location[0] - a][location[1] + a].color == colors['opponent'] and isinstance(board[location[0] - a][location[1] + a], Pawn) and a == 1:
-                    return True
-
-                if board[location[0] - a][location[1] + a].color == colors['friendly']:
-                    break
-                else:
-                    if isinstance(board[location[0] - a][location[1] + a], Bishop) or isinstance(board[location[0] - a][location[1] + a], Queen):
-                        return True
-            a += 1
-
-
-
-
-
-
-
+        for a,b in warMoves:
+            if (a,b) == location:
+                print('szach')
+                return True
         return False
 
 
 
 
+def isMoveCorrect(fig, moves, figureLoc, board):
+    movesToDel = []
+
+    for i, (a,b) in enumerate(moves):
+
+        buf = board[a][b]
+        if board[a][b] != ' ':
+            board[a][b] = ' '
+
+        (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]],board[a][b])
+        kingLoc = lookForKing(fig, board)
+        if King.isCheck(board[kingLoc[0]][kingLoc[1]], board, kingLoc):
+            movesToDel.append((a,b))
+        (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
+        board[a][b] = buf
+    if len(movesToDel) > 0:
+        for a in movesToDel:
+            i = moves.index(a)
+            del moves[i]
+
+    return moves
 
 
 
 
 
-
-
-
-
-
-
-
-
-
+def lookForKing(fig,board):
+    if fig.color == 'black':
+        colors = {'friendly': 'black', 'opponent': 'white'}
+    else:
+        colors = {'friendly': 'white', 'opponent': 'black'}
+    for a in range(8):
+        for b in range(8):
+            if isinstance(board[a][b], King):
+                if board[a][b].color == colors['friendly']:
+                    return a,b
