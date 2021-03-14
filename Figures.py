@@ -1,23 +1,93 @@
 import pygame
 
 
-class Pawn:
+class Figure:
+    """
+    Parent Class for all figures
+    """
 
-    def __init__(self, color, x, y):
+    def __init__(self, color, x, y, img):
         self.color = color
         self.x = x
         self.y = y
-        self.is_possible = True
-        self.was_moving = False
-        if color == 'black':
-            self.img = pygame.image.load('img/C_Pion.png')
-        if color == 'white':
-            self.img = pygame.image.load('img/B_Pion.png')
+        self.img = pygame.image.load(img)
+        if self.color == 'black':
+            self.colors = {'friendly': 'black', 'opponent': 'white'}
+        else:
+            self.colors = {'friendly': 'white', 'opponent': 'black'}
 
     def __str__(self):
-        return f'{self.color} Pawn ({self.x},{self.y})'
+        return f'{self.color} {type(self).__name__} ({self.x},{self.y})'
 
-    def isMovePossible(self, locations, board):
+    def checkLongMoves(self, board, possibleMoves, row, column):
+        if board[row][column] == ' ':
+            possibleMoves.append((row, column))
+        else:
+            if board[row][column].color == self.colors['friendly']:
+                return False
+            if board[row][column].color == self.colors['opponent']:
+                possibleMoves.append((row, column))
+                return False
+        return True
+
+    def checkShortMove(self, board, possibleMoves, row, column):
+        if board[row][column] == ' ':
+            possibleMoves.append((row, column))
+        else:
+            if board[row][column].color == self.colors['opponent']:
+                possibleMoves.append((row, column))
+
+    @staticmethod
+    def isMoveCorrect(moves, figureLoc, board):
+        movesToDel = []
+        color = board[figureLoc[0]][figureLoc[1]].color
+
+        for i, (a, b) in enumerate(moves):
+
+            buf = board[a][b]
+            if board[a][b] != ' ':
+                board[a][b] = ' '
+
+            (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
+            kingLoc = King.lookForKing(color, board)
+            if King.isCheck(board[kingLoc[0]][kingLoc[1]], board, kingLoc):
+                movesToDel.append((a, b))
+            (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
+            board[a][b] = buf
+        if len(movesToDel) > 0:
+            for a in movesToDel:
+                i = moves.index(a)
+                del moves[i]
+        return moves
+
+    @staticmethod
+    def opponentPossibleMoves(board, colors):
+        tab = [Knight, Pawn, Rook, Queen, Bishop]
+        allMoves = []
+        for a, line in enumerate(board):
+            for b, value in enumerate(line):
+                try:
+                    for c in tab:
+                        if isinstance(board[a][b], c) and board[a][b].color == colors['opponent']:
+                            locations = {'figure': (a, b), 'field': False}
+                            moves = c.possibleMoves(board[a][b], locations, board)
+                            allMoves += moves
+                            break
+                except:
+                    pass
+        return allMoves
+
+
+class Pawn(Figure):
+
+    def __init__(self, color, x, y, img):
+        super().__init__(color, x, y, img)
+        self.was_moving = False
+
+    def checkMove(self, board):
+        pass
+
+    def possibleMoves(self, locations, board):
         pawnLoc = locations['figure']
         possibleMoves = []
 
@@ -30,22 +100,18 @@ class Pawn:
 
                 # zbicie w prawo
                 if pawnLoc[1] < 7:
-                    if board[pawnLoc[0] - 1][pawnLoc[1] + 1] != ' ':
-                        if board[pawnLoc[0] - 1][pawnLoc[1] + 1].color == 'black':
-                            possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] + 1))
+                    if board[pawnLoc[0] - 1][pawnLoc[1] + 1] != ' ' and board[pawnLoc[0] - 1][pawnLoc[1] + 1].color == 'black':
+                        possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] + 1))
 
                 # zbicie w lewo
                 if pawnLoc[1] > 0:
-                    if board[pawnLoc[0] - 1][pawnLoc[1] - 1] != ' ':
-                        if board[pawnLoc[0] - 1][pawnLoc[1] - 1].color == 'black':
-                            possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] - 1))
+                    if board[pawnLoc[0] - 1][pawnLoc[1] - 1] != ' ' and board[pawnLoc[0] - 1][pawnLoc[1] - 1].color == 'black':
+                        possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] - 1))
 
-
-            #ruch o dwa do przodu
-
-                if self.was_moving is False and board[pawnLoc[0] - 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] - 2][pawnLoc[1]] == ' ':
+                # ruch o dwa do przodu
+                if self.was_moving is False and board[pawnLoc[0] - 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] - 2][
+                    pawnLoc[1]] == ' ':
                     possibleMoves.append((pawnLoc[0] - 2, pawnLoc[1]))
-
 
         if self.color == 'black':
             # ruch do przodu
@@ -53,450 +119,213 @@ class Pawn:
                 if board[pawnLoc[0] + 1][pawnLoc[1]] == ' ':
                     possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1]))
 
-            # zbicie w prawo
+                # zbicie w prawo
                 if pawnLoc[1] < 7:
-                    if board[pawnLoc[0] + 1][pawnLoc[1] + 1] != ' ':
-                        if board[pawnLoc[0] + 1][pawnLoc[1] + 1].color == 'white':
-                            possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] + 1))
+                    if board[pawnLoc[0] + 1][pawnLoc[1] + 1] != ' ' and board[pawnLoc[0] + 1][pawnLoc[1] + 1].color == 'white':
+                        possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] + 1))
 
-            # zbicie w lewo
+                # zbicie w lewo
                 if pawnLoc[1] > 0:
-                    if board[pawnLoc[0] + 1][pawnLoc[1] - 1] != ' ':
-                        if board[pawnLoc[0] + 1][pawnLoc[1] - 1].color == 'white':
-                            possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] - 1))
+                    if board[pawnLoc[0] + 1][pawnLoc[1] - 1] != ' ' and board[pawnLoc[0] + 1][pawnLoc[1] - 1].color == 'white':
+                        possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] - 1))
 
             if self.was_moving is False and board[pawnLoc[0] + 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] + 2][pawnLoc[1]] == ' ':
                 possibleMoves.append((pawnLoc[0] + 2, pawnLoc[1]))
 
-
         return possibleMoves
 
 
+class Knight(Figure):
 
+    def __init__(self, color, x, y, img):
+        super().__init__(color, x, y, img)
 
-class Knight:
-
-    def __init__(self, color, x, y):
-        self.color = color
-        self.x = x
-        self.y = y
-        self.is_possible = True
-        if color == 'black':
-            self.img = pygame.image.load('img/C_Kon.png')
-        if color == 'white':
-            self.img = pygame.image.load('img/B_Kon.png')
-
-
-    def isMovePossible(self, locations, board):
+    def possibleMoves(self, locations, board):
         knightLoc = locations['figure']
         possibleMoves = []
-        if self.color == 'black':
-            colors = {'friendly': 'black', 'opponent': 'white'}
-        else:
-            colors = {'friendly': 'white', 'opponent': 'black'}
 
-
-
-        # ruchy w lewo dół
-
+        # left - down moves
         if knightLoc[0] < 7 and knightLoc[1] > 1:
-            if board[knightLoc[0]+1][knightLoc[1]-2] == ' ':
-                possibleMoves.append((knightLoc[0] + 1, knightLoc[1] - 2))
-            else:
-                if board[knightLoc[0]+1][knightLoc[1]-2].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0]+1, knightLoc[1]-2))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] + 1, knightLoc[1] - 2)
 
         if knightLoc[0] < 6 and knightLoc[1] > 0:
-            if board[knightLoc[0]+2][knightLoc[1]-1] == ' ':
-                possibleMoves.append((knightLoc[0] + 2, knightLoc[1] - 1))
-            else:
-                if board[knightLoc[0]+2][knightLoc[1]-1].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0]+2, knightLoc[1]-1))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] + 2, knightLoc[1] - 1)
 
-        # ruchy w prawo dół
-
+        # right - down moves
         if knightLoc[0] < 7 and knightLoc[1] < 6:
-            if board[knightLoc[0] + 1][knightLoc[1] + 2] == ' ':
-                possibleMoves.append((knightLoc[0] + 1, knightLoc[1] + 2))
-            else:
-                if board[knightLoc[0] + 1][knightLoc[1] + 2].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0] + 1, knightLoc[1] + 2))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] + 1, knightLoc[1] + 2)
 
         if knightLoc[0] < 6 and knightLoc[1] < 7:
-            if board[knightLoc[0] + 2][knightLoc[1] + 1] == ' ':
-                possibleMoves.append((knightLoc[0] + 2, knightLoc[1] + 1))
-            else:
-                if board[knightLoc[0] + 2][knightLoc[1] + 1].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0] + 2, knightLoc[1] + 1))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] + 2, knightLoc[1] + 1)
 
-        # ruchy w prawo góra
-
+        # right - up moves
         if knightLoc[0] > 0 and knightLoc[1] < 6:
-            if board[knightLoc[0] - 1][knightLoc[1] + 2] == ' ':
-                possibleMoves.append((knightLoc[0] - 1, knightLoc[1] + 2))
-            else:
-                if board[knightLoc[0] -1][knightLoc[1] + 2].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0] - 1, knightLoc[1] + 2))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] - 1, knightLoc[1] + 2)
 
         if knightLoc[0] > 1 and knightLoc[1] < 7:
-            if board[knightLoc[0] - 2][knightLoc[1] + 1] == ' ':
-                possibleMoves.append((knightLoc[0] - 2, knightLoc[1] + 1))
-            else:
-                if board[knightLoc[0] - 2][knightLoc[1] + 1].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0] - 2, knightLoc[1] + 1))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] - 2, knightLoc[1] + 1)
 
-
-
-        # ruchy w lewo góra
-
+        # left - up moves
         if knightLoc[0] > 0 and knightLoc[1] > 1:
-            if board[knightLoc[0] - 1][knightLoc[1] - 2] == ' ':
-                possibleMoves.append((knightLoc[0] - 1, knightLoc[1] - 2))
-            else:
-                if board[knightLoc[0] - 1][knightLoc[1] - 2].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0] - 1, knightLoc[1] - 2))
+            super().checkShortMove(board, possibleMoves, knightLoc[0] - 1, knightLoc[1] - 2)
 
         if knightLoc[0] > 1 and knightLoc[1] > 0:
-            if board[knightLoc[0] - 2][knightLoc[1] - 1] == ' ':
-                possibleMoves.append((knightLoc[0] - 2, knightLoc[1] - 1))
-            else:
-                if board[knightLoc[0] - 2][knightLoc[1] - 1].color == colors['opponent']:
-                    possibleMoves.append((knightLoc[0] - 2, knightLoc[1] - 1))
-
-
-
-
+            super().checkShortMove(board, possibleMoves, knightLoc[0] - 2, knightLoc[1] - 1)
 
         return possibleMoves
 
 
+class Bishop(Figure):
 
+    def __init__(self, color, x, y, img):
+        super().__init__(color, x, y, img)
 
-
-class Bishop:
-
-    # polozenie piona (wiersz, kolumna)
-
-    def __init__(self, color, x, y):
-        self.color = color
-        self.x = x
-        self.y = y
-        self.is_possible = False
-        if color == 'black':
-            self.img = pygame.image.load('img/C_Goniec.png')
-        if color == 'white':
-            self.img = pygame.image.load('img/B_Goniec.png')
-
-    def isMovePossible(self, locations, board):
+    def possibleMoves(self, locations, board):
         bishopLoc = locations['figure']
         possibleMoves = []
-        # ruch w lewy dół
-        if self.color == 'black':
-            colors = {'friendly': 'black', 'opponent': 'white'}
-        else:
-            colors = {'friendly': 'white', 'opponent': 'black'}
 
-
+        # left - down moves
         if bishopLoc[0] < 7 and bishopLoc[1] > 0:
-
-
-            for i in range(1,8):
+            for i in range(1, 8):
                 if bishopLoc[0] + i > 7 or bishopLoc[1] - i < 0:
                     break
-
-                if board[bishopLoc[0] + i][bishopLoc[1] - i] != ' ':
-                    if board[bishopLoc[0] + i][bishopLoc[1] - i].color == colors['friendly']:
-                        break
-                    elif board[bishopLoc[0] + i][bishopLoc[1] - i].color == colors['opponent']:
-                        possibleMoves.append((bishopLoc[0] + i, bishopLoc[1] - i))
-                        break
-                else:
-                    possibleMoves.append((bishopLoc[0] + i, bishopLoc[1] - i))
-
-        # ruch lewo gora
-
-        if bishopLoc[0] > 0 and bishopLoc[1] > 0:
-
-            for i in range(1, 8):
-
-                if bishopLoc[0] - i < 0 or bishopLoc[1] - i < 0:
+                if super().checkLongMoves(board, possibleMoves, bishopLoc[0] + i, bishopLoc[1] - i) is False:
                     break
 
-                if board[bishopLoc[0] - i][bishopLoc[1] - i] != ' ':
-                    if board[bishopLoc[0] - i][bishopLoc[1] - i].color == colors['friendly']:
-                        break
-                    elif board[bishopLoc[0] - i][bishopLoc[1] - i].color == colors['opponent']:
-                        possibleMoves.append((bishopLoc[0] - i, bishopLoc[1] - i))
-                        break
-                else:
+        # left - up moves
+        if bishopLoc[0] > 0 and bishopLoc[1] > 0:
+            for i in range(1, 8):
+                if bishopLoc[0] - i < 0 or bishopLoc[1] - i < 0:
+                    break
+                if super().checkLongMoves(board, possibleMoves, bishopLoc[0] - i, bishopLoc[1] - i) is False:
+                    break
 
-                    possibleMoves.append((bishopLoc[0] - i, bishopLoc[1] - i))
-
-        #ruch w prawo dol
-
+        # right - down moves
         if bishopLoc[0] < 7 and bishopLoc[1] < 7:
-
             for i in range(1, 8):
                 if bishopLoc[0] + i > 7 or bishopLoc[1] + i > 7:
                     break
+                if super().checkLongMoves(board, possibleMoves, bishopLoc[0] + i, bishopLoc[1] + i) is False:
+                    break
 
-                if board[bishopLoc[0] + i][bishopLoc[1] + i] != ' ':
-                    if board[bishopLoc[0] + i][bishopLoc[1] + i].color == colors['friendly']:
-                        break
-                    elif board[bishopLoc[0] + i][bishopLoc[1] + i].color == colors['opponent']:
-                        possibleMoves.append((bishopLoc[0] + i, bishopLoc[1] + i))
-                        break
-                else:
-                    possibleMoves.append((bishopLoc[0] + i, bishopLoc[1] + i))
-
-        #ruch w prawo gora
+        # right - up moves
         if bishopLoc[0] > 0 and bishopLoc[1] < 7:
-
-
             for i in range(1, 8):
                 if bishopLoc[0] - i < 0 or bishopLoc[1] + i > 7:
                     break
-
-                if board[bishopLoc[0] - i][bishopLoc[1] + i] != ' ':
-                    if board[bishopLoc[0] - i][bishopLoc[1] + i].color == colors['friendly']:
-                        break
-                    elif board[bishopLoc[0] - i][bishopLoc[1] + i].color == colors['opponent']:
-
-                        possibleMoves.append((bishopLoc[0] - i, bishopLoc[1] + i))
-                        break
-                else:
-                    possibleMoves.append((bishopLoc[0] - i, bishopLoc[1] + i))
-
-
-
+                if super().checkLongMoves(board, possibleMoves, bishopLoc[0] - i, bishopLoc[1] + i) is False:
+                    break
 
         return possibleMoves
 
 
+class Rook(Figure):
 
-class Rook:
+    rooks = []
 
-    def __init__(self, color, x, y):
-        self.color = color
-        self.x = x
-        self.y = y
-        self.is_possible = False
-        if color == 'black':
-            self.img = pygame.image.load('img/C_Wieza.png')
-        if color == 'white':
-            self.img = pygame.image.load('img/B_Wieza.png')
+    def __init__(self, color, x, y, img):
+        super().__init__(color, x, y, img)
+        self.was_moving = False
+        self.rooks.append(self)
 
-    def isMovePossible(self, locations, board):
+    def possibleMoves(self, locations, board):
         rookLoc = locations['figure']
         possibleMoves = []
-        if self.color == 'black':
-            colors = {'friendly': 'black', 'opponent': 'white'}
-        else:
-            colors = {'friendly': 'white', 'opponent': 'black'}
 
-
-        #ruchy w dół
-
+        # down moves
         if rookLoc[0] < 7:
-            for a in range(1,8):
-                if rookLoc[0]+a == 8:
+            for a in range(1, 8):
+                if rookLoc[0] + a == 8:
                     break
-                else:
-                    if board[rookLoc[0]+a][rookLoc[1]] == ' ':
-                        possibleMoves.append((rookLoc[0]+a, rookLoc[1]))
-                    else:
-                        if board[rookLoc[0]+a][rookLoc[1]].color == colors['friendly']:
-                            break
-                        if board[rookLoc[0]+a][rookLoc[1]].color == colors['opponent']:
-                            possibleMoves.append((rookLoc[0]+a, rookLoc[1]))
-                            break
-        # ruchy w góre
+                if super().checkLongMoves(board, possibleMoves, rookLoc[0] + a, rookLoc[1]) is False:
+                    break
 
+        # up moves
         if rookLoc[0] > 0:
-            for a in range(1,8):
-                if rookLoc[0] - a == -1:
+            for a in range(1, 8):
+                if rookLoc[0] - a == 8:
                     break
-                else:
-                    if board[rookLoc[0]-a][rookLoc[1]] == ' ':
-                        possibleMoves.append((rookLoc[0]-a, rookLoc[1]))
-                    else:
-                        if board[rookLoc[0]-a][rookLoc[1]].color == colors['friendly']:
-                            break
-                        if board[rookLoc[0]-a][rookLoc[1]].color == colors['opponent']:
-                            possibleMoves.append((rookLoc[0]-a, rookLoc[1]))
-                            break
-        # ruchy w prawo
+                if super().checkLongMoves(board, possibleMoves, rookLoc[0] - a, rookLoc[1]) is False:
+                    break
 
+        # right moves
         if rookLoc[1] < 7:
-            for a in range(1,8):
-                if rookLoc[1]+a == 8:
+            for a in range(1, 8):
+                if rookLoc[1] + a == 8:
                     break
-                else:
-                    if board[rookLoc[0]][rookLoc[1]+a] == ' ':
-                        possibleMoves.append((rookLoc[0], rookLoc[1]+a))
-                    else:
-                        if board[rookLoc[0]][rookLoc[1]+a].color == colors['friendly']:
-                            break
-                        if board[rookLoc[0]][rookLoc[1]+a].color == colors['opponent']:
-                            possibleMoves.append((rookLoc[0], rookLoc[1]+a))
-                            break
-        # ruchy w lewo
+                if super().checkLongMoves(board, possibleMoves, rookLoc[0], rookLoc[1] + a) is False:
+                    break
+
+        # left moves
         if rookLoc[1] > 0:
-            for a in range(1,8):
-                if rookLoc[1] - a == -1:
+            for a in range(1, 8):
+                if rookLoc[1] - a == 8:
                     break
-                else:
-                    if board[rookLoc[0]][rookLoc[1]-a] == ' ':
-                        possibleMoves.append((rookLoc[0], rookLoc[1]-a))
-                    else:
-                        if board[rookLoc[0]][rookLoc[1]-a].color == colors['friendly']:
-                            break
-                        if board[rookLoc[0]][rookLoc[1]-a].color == colors['opponent']:
-                            possibleMoves.append((rookLoc[0], rookLoc[1]-a))
-                            break
-
+                if super().checkLongMoves(board, possibleMoves, rookLoc[0], rookLoc[1] - a) is False:
+                    break
         return possibleMoves
 
 
+class Queen(Rook, Bishop):
 
-class Queen:
+    def __init__(self, color, x, y, img):
+        Bishop.__init__(self, color, x, y, img)
 
-    def __init__(self, color, x, y):
-        self.color = color
-        self.x = x
-        self.y = y
-        self.is_possible = False
-        if color == 'black':
-            self.img = pygame.image.load('img/C_Dama.png')
-        if color == 'white':
-            self.img = pygame.image.load('img/B_Dama.png')
-
-    def isMovePossible(self, locations, board):
-        a = Rook.isMovePossible(self, locations, board)
-        b = Bishop.isMovePossible(self, locations, board)
-        possibleMoves = a+b
+    def possibleMoves(self, locations, board):
+        rookMoves = Rook.possibleMoves(self, locations, board)
+        bishopMoves = Bishop.possibleMoves(self, locations, board)
+        possibleMoves = rookMoves + bishopMoves
         return possibleMoves
 
 
-class King:
+class King(Figure):
 
-    kings = []
-
-    def __init__(self, color, x, y):
-        self.color = color
-        self.x = x
-        self.y = y
-        self.is_possible = False
+    def __init__(self, color, x, y, img):
+        super().__init__(color, x, y, img)
         self.check = False
-        if color == 'black':
-            self.img = pygame.image.load('img/C_Krol.png')
-        if color == 'white':
-            self.img = pygame.image.load('img/B_Krol.png')
-        self.kings.append(self)
+        self.was_moving = False
 
-
-    def isMovePossible(self, locations, board):
+    def possibleMoves(self, locations, board):
         possibleMoves = []
         kingLoc = locations['figure']
-        if self.color == 'black':
-            colors = {'friendly': 'black', 'opponent': 'white'}
-        else:
-            colors = {'friendly': 'white', 'opponent': 'black'}
 
-
-
-
+        # up move
         if kingLoc[0] > 0:
+            super().checkShortMove(board, possibleMoves, kingLoc[0] - 1, kingLoc[1])
 
-            # ruch w góre
-            if board[kingLoc[0]-1][kingLoc[1]] == ' ':
-                possibleMoves.append((kingLoc[0]-1, kingLoc[1]))
-            else:
-                if board[kingLoc[0]-1][kingLoc[1]].color == colors['opponent']:
-                    possibleMoves.append((kingLoc[0]-1, kingLoc[1]))
-            # lewy górny róg
+            # left - up move
             if kingLoc[1] > 0:
-                if board[kingLoc[0] - 1][kingLoc[1]-1] == ' ':
-                    possibleMoves.append((kingLoc[0] - 1, kingLoc[1]-1))
-                else:
-                    if board[kingLoc[0] - 1][kingLoc[1]-1].color == colors['opponent']:
-                        possibleMoves.append((kingLoc[0] - 1, kingLoc[1]-1))
+                super().checkShortMove(board, possibleMoves, kingLoc[0] - 1, kingLoc[1] - 1)
 
-            # prawy górny róg
+            # right - up move
             if kingLoc[1] < 7:
-                if kingLoc[1] > 0:
-                    if board[kingLoc[0] - 1][kingLoc[1] + 1] == ' ':
-                        possibleMoves.append((kingLoc[0] - 1, kingLoc[1] + 1))
-                    else:
-                        if board[kingLoc[0] - 1][kingLoc[1] + 1].color == colors['opponent']:
-                            possibleMoves.append((kingLoc[0] - 1, kingLoc[1] + 1))
+                super().checkShortMove(board, possibleMoves, kingLoc[0] - 1, kingLoc[1] + 1)
 
-
-        #ruch w dól
-
+        # down move
         if kingLoc[0] < 7:
-            if board[kingLoc[0]+1][kingLoc[1]] == ' ':
-                possibleMoves.append((kingLoc[0]+1, kingLoc[1]))
-            else:
-                if board[kingLoc[0]+1][kingLoc[1]].color == colors['opponent']:
-                    possibleMoves.append((kingLoc[0]+1, kingLoc[1]))
-            # prawy dolny róg
+            super().checkShortMove(board, possibleMoves, kingLoc[0] + 1, kingLoc[1])
+
+            # right - down move
             if kingLoc[1] < 7:
-                if kingLoc[1] > 0:
-                    if board[kingLoc[0] + 1][kingLoc[1] + 1] == ' ':
-                        possibleMoves.append((kingLoc[0] + 1, kingLoc[1] + 1))
-                    else:
-                        if board[kingLoc[0] + 1][kingLoc[1] + 1].color == colors['opponent']:
-                            possibleMoves.append((kingLoc[0] + 1, kingLoc[1] + 1))
-            #lewy dolny rog
+                super().checkShortMove(board, possibleMoves, kingLoc[0] + 1, kingLoc[1] + 1)
+
+            # left - down move
             if kingLoc[1] > 0:
-                if board[kingLoc[0] + 1][kingLoc[1]-1] == ' ':
-                    possibleMoves.append((kingLoc[0] + 1, kingLoc[1]-1))
-                else:
-                    if board[kingLoc[0] + 1][kingLoc[1]-1].color == colors['opponent']:
-                        possibleMoves.append((kingLoc[0] + 1, kingLoc[1]-1))
+                super().checkShortMove(board, possibleMoves, kingLoc[0] + 1, kingLoc[1] - 1)
 
-        # ruch w prawo
-
+        # right move
         if kingLoc[1] < 7:
-            if board[kingLoc[0]][kingLoc[1]+1] == ' ':
-                possibleMoves.append((kingLoc[0], kingLoc[1]+1))
-            else:
-                if board[kingLoc[0]][kingLoc[1]+1].color == colors['opponent']:
-                    possibleMoves.append((kingLoc[0], kingLoc[1]+1))
-        # ruch w lewo
+            super().checkShortMove(board, possibleMoves, kingLoc[0], kingLoc[1] + 1)
 
+        # left move
         if kingLoc[1] > 0:
-            if board[kingLoc[0]][kingLoc[1]-1] == ' ':
-                possibleMoves.append((kingLoc[0], kingLoc[1]-1))
-            else:
-                if board[kingLoc[0]][kingLoc[1]-1].color == colors['opponent']:
-                    possibleMoves.append((kingLoc[0], kingLoc[1]-1))
+            super().checkShortMove(board, possibleMoves, kingLoc[0], kingLoc[1] - 1)
 
-
+        cas = self.castling(locations, board)
+        if cas:
+            possibleMoves.extend(cas)
 
         return possibleMoves
-
-
-    def allMoves(self, board, colors):
-        tab = [Knight, Pawn, Rook, Queen, Bishop]
-        allMoves = []
-
-        for a, line in enumerate(board):
-            for b, value in enumerate(line):
-                try:
-                    for c in tab:
-                        if isinstance(board[a][b], c) and board[a][b].color == colors['opponent']:
-                            locations = {'figure': (a,b), 'field': False}
-                            moves = c.isMovePossible(board[a][b], locations, board)
-                            allMoves += moves
-                            break
-                except:
-                    pass
-
-        return allMoves
-
-
 
     def isCheck(self, board, location):
         if self.color == 'black':
@@ -504,50 +333,67 @@ class King:
         else:
             colors = {'friendly': 'white', 'opponent': 'black'}
 
-        warMoves = self.allMoves(board, colors)
+        opponentMoves = Figure.opponentPossibleMoves(board, colors)
 
-        for a,b in warMoves:
-            if (a,b) == location:
+        for a, b in opponentMoves:
+            if (a, b) == location:
                 print('szach')
                 return True
         return False
 
+    def isCheckMate(self, board):
 
+        if self.color == 'black':
+            colors = {'friendly': 'black', 'opponent': 'white'}
+        else:
+            colors = {'friendly': 'white', 'opponent': 'black'}
 
+        for a in range(8):
+            for b in range(8):
+                if board[a][b] != ' ':
+                    if board[a][b].color == colors['friendly']:
+                        locations = {'figure': (a, b), 'field': False}
+                        moves = board[a][b].possibleMoves(locations, board)
+                        possibleMoves = Figure.isMoveCorrect(moves, locations['figure'], board)
+                        if len(possibleMoves) > 0:
+                            return True
+        print(f'{self.color} sszach mat')
+        return False
 
-def isMoveCorrect(fig, moves, figureLoc, board):
-    movesToDel = []
+    @staticmethod
+    def lookForKing(color, board):
+        if color == 'black':
+            colors = {'friendly': 'black', 'opponent': 'white'}
+        else:
+            colors = {'friendly': 'white', 'opponent': 'black'}
+        for a in range(8):
+            for b in range(8):
+                if isinstance(board[a][b], King):
+                    if board[a][b].color == colors['friendly']:
+                        return a, b
 
-    for i, (a,b) in enumerate(moves):
+    def castling(self, locations, board):
+        possibleMoves = []
+        kingLoc = locations['figure']
 
-        buf = board[a][b]
-        if board[a][b] != ' ':
-            board[a][b] = ' '
+        if not self.was_moving and not self.check:
+            if board[kingLoc[0]][kingLoc[1]-1] == ' ' and board[kingLoc[0]][kingLoc[1]-2] == ' ' and board[kingLoc[0]][kingLoc[1]-3] == ' ':
+                if type(board[kingLoc[0]][kingLoc[1]-4]) == Rook:
+                    if board[kingLoc[0]][kingLoc[1]-4].color == self.color and not board[kingLoc[0]][kingLoc[1]-4].was_moving:
+                        m = [(kingLoc[0], kingLoc[1]-1), (kingLoc[0], kingLoc[1]-2)]
+                        moves = Figure.isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
+                        print(moves)
+                        if len(moves) == 2:
 
-        (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]],board[a][b])
-        kingLoc = lookForKing(fig, board)
-        if King.isCheck(board[kingLoc[0]][kingLoc[1]], board, kingLoc):
-            movesToDel.append((a,b))
-        (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
-        board[a][b] = buf
-    if len(movesToDel) > 0:
-        for a in movesToDel:
-            i = moves.index(a)
-            del moves[i]
+                            possibleMoves.append(moves[1])
 
-    return moves
+            if board[kingLoc[0]][kingLoc[1]+1] == ' ' and board[kingLoc[0]][kingLoc[1]+2] == ' ':
+                if type(board[kingLoc[0]][kingLoc[1]+3]) == Rook:
+                    if board[kingLoc[0]][kingLoc[1]+3].color == self.color and not board[kingLoc[0]][kingLoc[1]+3].was_moving:
+                        m = [(kingLoc[0], kingLoc[1]+1), (kingLoc[0], kingLoc[1]+2)]
+                        moves = Figure.isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
+                        print(moves)
+                        if len(moves) == 2:
+                            possibleMoves.append(moves[1])
+        return possibleMoves
 
-
-
-
-
-def lookForKing(fig,board):
-    if fig.color == 'black':
-        colors = {'friendly': 'black', 'opponent': 'white'}
-    else:
-        colors = {'friendly': 'white', 'opponent': 'black'}
-    for a in range(8):
-        for b in range(8):
-            if isinstance(board[a][b], King):
-                if board[a][b].color == colors['friendly']:
-                    return a,b
