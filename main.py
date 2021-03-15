@@ -1,5 +1,5 @@
 import pygame
-from Figures import Pawn, Rook, Knight, Bishop, Queen, King, Figure
+from Figures import Pawn, Rook, Knight, Bishop, Queen, King, Figure, isMoveCorrect, castlingMove
 # from Mechanics import clickNavi, highlightPossibleMoves
 from Window import Window
 
@@ -13,13 +13,13 @@ black_queen = Queen('black', 270, 0, 'img/C_Dama.png')
 black_king = King('black', 360, 0, 'img/C_Krol.png')
 black_pawns = [Pawn('black', x * 90, 90, 'img/C_Pion.png') for x in range(8)]
 
+
 white_rooks = [Rook('white', 0, 630, 'img/B_Wieza.png'), Rook('white', 630, 630, 'img/B_Wieza.png')]
 white_knight = [Knight('white', 90, 630, 'img/B_Kon.png'), Knight('white', 540, 630, 'img/B_Kon.png')]
 white_bishop = [Bishop('white', 180, 630, 'img/B_Goniec.png'), Bishop('white', 450, 630, 'img/B_Goniec.png')]
 white_queen = Queen('white', 270, 630, 'img/B_Dama.png')
 white_king = King('white', 360, 630, 'img/B_Krol.png')
 white_pawns = [Pawn('white', x * 90, 540, 'img/B_Pion.png') for x in range(8)]
-
 
 board = [
     [black_rooks[0], black_knight[0], black_bishop[0], black_queen, black_king, black_bishop[1], black_knight[1],
@@ -34,6 +34,7 @@ board = [
      white_rooks[1]]
 ]
 
+
 def clickNavi(mouseposition):
     x = y = 0
     for a in range(8):
@@ -47,42 +48,39 @@ def clickNavi(mouseposition):
     return y, x
 
 
-
-def moveFigure():
-    global locations
+def moveFigure(figLoc, fieldLoc):
     global move
 
-
-    # # is castling in process
-    # if type(board[locations['figure'][0]][locations['figure'][1]]) == King:
-    #     if locations['figure'][1] - locations['field'][1] == 2:
-
-
-
-
-    if board[locations['figure'][0]][locations['figure'][1]].color == 'white':
+    if board[figLoc[0]][figLoc[1]].color == 'white':
         move = 'black'
     else:
         move = 'white'
-    fig = type(board[locations['figure'][0]][locations['figure'][1]])
-    if fig == Pawn or fig == King or fig == Rook :
-        board[locations['figure'][0]][locations['figure'][1]].was_moving = True
 
+    # castling
+    if type(board[figLoc[0]][figLoc[1]]) == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
+        if figLoc[1] - fieldLoc[1] == 2:
+            castlingMove(board, figLoc, fieldLoc, (0, 3))
+        elif fieldLoc[1] - figLoc[1] == 2:
+            castlingMove(board, figLoc, fieldLoc, (7, 5))
 
+        moveLoc = [figLoc, fieldLoc]
 
+        return moveLoc
 
-    board[locations['figure'][0]][locations['figure'][1]].y = locations['field'][0] * 90
-    board[locations['figure'][0]][locations['figure'][1]].x = locations['field'][1] * 90
+    fig = type(board[figLoc[0]][figLoc[1]])
 
-    if board[locations['field'][0]][locations['field'][1]] != ' ':
-        board[locations['field'][0]][locations['field'][1]] = ' '
+    if fig == Pawn or fig == King or fig == Rook:
+        board[figLoc[0]][figLoc[1]].was_moving = True
 
-    (board[locations['figure'][0]][locations['figure'][1]], board[locations['field'][0]][locations['field'][1]]) = (
-        board[locations['field'][0]][locations['field'][1]], board[locations['figure'][0]][locations['figure'][1]])
+    board[figLoc[0]][figLoc[1]].y = fieldLoc[0] * 90
+    board[figLoc[0]][figLoc[1]].x = fieldLoc[1] * 90
 
-    moveLoc = [locations['figure'], locations['field']]
+    if board[fieldLoc[0]][fieldLoc[1]] != ' ':
+        board[fieldLoc[0]][fieldLoc[1]] = ' '
 
-    locations = {'figure': False, 'field': False}
+    (board[figLoc[0]][figLoc[1]], board[fieldLoc[0]][fieldLoc[1]]) = (board[fieldLoc[0]][fieldLoc[1]], board[figLoc[0]][figLoc[1]])
+
+    moveLoc = [figLoc, fieldLoc]
 
     return moveLoc
 
@@ -95,7 +93,6 @@ possibleMoves = []
 moveLoc = {}
 while run:
 
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -106,22 +103,22 @@ while run:
             if board[clickLocation[0]][clickLocation[1]] != ' ':
                 if board[clickLocation[0]][clickLocation[1]].color == move:
                     locations['figure'] = clickLocation
-                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].possibleMoves(locations,board)
-                    Figure.isMoveCorrect(possibleMoves, locations['figure'], board)
+                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].possibleMoves(locations,
+                                                                                                        board)
+                    isMoveCorrect(possibleMoves, locations['figure'], board)
 
             if len(possibleMoves) > 0:
                 for a in possibleMoves:
                     if a == clickLocation:
                         locations['field'] = clickLocation
-                        moveLoc = moveFigure()
-
+                        moveLoc = moveFigure(locations['figure'], locations['field'])
+                        locations = {'figure': False, 'field': False}
+                        # moveLoc = moveFigure()
                         possibleMoves = []
                         black_king.check = black_king.isCheck(board, (int(black_king.y / 90), int(black_king.x / 90)))
                         white_king.check = white_king.isCheck(board, (int(white_king.y / 90), int(white_king.x / 90)))
-                        if black_king.check is True:
-                            black_king.isCheckMate(board)
-                        if white_king.check is True:
-                            white_king.isCheckMate(board)
+                        black_king.isCheckMate(board)
+                        white_king.isCheckMate(board)
 
     window.drawBoard(possibleMoves, board, locations, moveLoc)
 

@@ -37,47 +37,6 @@ class Figure:
             if board[row][column].color == self.colors['opponent']:
                 possibleMoves.append((row, column))
 
-    @staticmethod
-    def isMoveCorrect(moves, figureLoc, board):
-        movesToDel = []
-        color = board[figureLoc[0]][figureLoc[1]].color
-
-        for i, (a, b) in enumerate(moves):
-
-            buf = board[a][b]
-            if board[a][b] != ' ':
-                board[a][b] = ' '
-
-            (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
-            kingLoc = King.lookForKing(color, board)
-            if King.isCheck(board[kingLoc[0]][kingLoc[1]], board, kingLoc):
-                movesToDel.append((a, b))
-            (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
-            board[a][b] = buf
-        if len(movesToDel) > 0:
-            for a in movesToDel:
-                i = moves.index(a)
-                del moves[i]
-        return moves
-
-    @staticmethod
-    def opponentPossibleMoves(board, colors):
-        tab = [Knight, Pawn, Rook, Queen, Bishop]
-        allMoves = []
-        for a, line in enumerate(board):
-            for b, value in enumerate(line):
-                try:
-                    for c in tab:
-                        if isinstance(board[a][b], c) and board[a][b].color == colors['opponent']:
-                            locations = {'figure': (a, b), 'field': False}
-                            moves = c.possibleMoves(board[a][b], locations, board)
-                            allMoves += moves
-                            break
-                except:
-                    pass
-        return allMoves
-
-
 class Pawn(Figure):
 
     def __init__(self, color, x, y, img):
@@ -221,12 +180,10 @@ class Bishop(Figure):
 
 class Rook(Figure):
 
-    rooks = []
-
     def __init__(self, color, x, y, img):
         super().__init__(color, x, y, img)
         self.was_moving = False
-        self.rooks.append(self)
+
 
     def possibleMoves(self, locations, board):
         rookLoc = locations['figure']
@@ -275,6 +232,7 @@ class Queen(Rook, Bishop):
         rookMoves = Rook.possibleMoves(self, locations, board)
         bishopMoves = Bishop.possibleMoves(self, locations, board)
         possibleMoves = rookMoves + bishopMoves
+        # print(possibleMoves)
         return possibleMoves
 
 
@@ -324,7 +282,7 @@ class King(Figure):
         cas = self.castling(locations, board)
         if cas:
             possibleMoves.extend(cas)
-
+        print(possibleMoves)
         return possibleMoves
 
     def isCheck(self, board, location):
@@ -333,8 +291,9 @@ class King(Figure):
         else:
             colors = {'friendly': 'white', 'opponent': 'black'}
 
-        opponentMoves = Figure.opponentPossibleMoves(board, colors)
-
+        opponentMoves = opponentPossibleMoves(board, colors)
+        # print(opponentMoves)
+        # print(location)
         for a, b in opponentMoves:
             if (a, b) == location:
                 print('szach')
@@ -354,7 +313,7 @@ class King(Figure):
                     if board[a][b].color == colors['friendly']:
                         locations = {'figure': (a, b), 'field': False}
                         moves = board[a][b].possibleMoves(locations, board)
-                        possibleMoves = Figure.isMoveCorrect(moves, locations['figure'], board)
+                        possibleMoves = isMoveCorrect(moves, locations['figure'], board)
                         if len(possibleMoves) > 0:
                             return True
         print(f'{self.color} sszach mat')
@@ -381,8 +340,8 @@ class King(Figure):
                 if type(board[kingLoc[0]][kingLoc[1]-4]) == Rook:
                     if board[kingLoc[0]][kingLoc[1]-4].color == self.color and not board[kingLoc[0]][kingLoc[1]-4].was_moving:
                         m = [(kingLoc[0], kingLoc[1]-1), (kingLoc[0], kingLoc[1]-2)]
-                        moves = Figure.isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
-                        print(moves)
+                        moves = isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
+                        # print(moves)
                         if len(moves) == 2:
 
                             possibleMoves.append(moves[1])
@@ -391,9 +350,57 @@ class King(Figure):
                 if type(board[kingLoc[0]][kingLoc[1]+3]) == Rook:
                     if board[kingLoc[0]][kingLoc[1]+3].color == self.color and not board[kingLoc[0]][kingLoc[1]+3].was_moving:
                         m = [(kingLoc[0], kingLoc[1]+1), (kingLoc[0], kingLoc[1]+2)]
-                        moves = Figure.isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
-                        print(moves)
+                        moves = isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
+                        # print(moves)
                         if len(moves) == 2:
                             possibleMoves.append(moves[1])
         return possibleMoves
 
+
+
+def isMoveCorrect(moves, figureLoc, board):
+    movesToDel = []
+    color = board[figureLoc[0]][figureLoc[1]].color
+
+    for i, (a, b) in enumerate(moves):
+
+        buf = board[a][b]
+        if board[a][b] != ' ':
+            board[a][b] = ' '
+
+        (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
+        kingLoc = King.lookForKing(color, board)
+        if King.isCheck(board[kingLoc[0]][kingLoc[1]], board, kingLoc):
+            movesToDel.append((a, b))
+        (board[a][b], board[figureLoc[0]][figureLoc[1]]) = (board[figureLoc[0]][figureLoc[1]], board[a][b])
+        board[a][b] = buf
+    if len(movesToDel) > 0:
+        for a in movesToDel:
+            i = moves.index(a)
+            del moves[i]
+    return moves
+
+
+def opponentPossibleMoves(board, colors):
+    tab = [Queen, Knight, Pawn, Rook, Bishop]
+    allMoves = []
+    for a, line in enumerate(board):
+        for b, value in enumerate(line):
+            try:
+                for c in tab:
+                    if isinstance(board[a][b], c) and board[a][b].color == colors['opponent']:
+                        locations = {'figure': (a, b), 'field': False}
+                        moves = board[a][b].possibleMoves(locations, board)
+                        allMoves += moves
+                        break
+            except:
+                pass
+    return allMoves
+
+
+def castlingMove(board, figLoc, fieldLoc, rookPos):
+    board[figLoc[0]][figLoc[1]].y = fieldLoc[0] * 90
+    board[figLoc[0]][figLoc[1]].x = fieldLoc[1] * 90
+    board[figLoc[0]][rookPos[0]].x = rookPos[1]*90
+    (board[figLoc[0]][figLoc[1]], board[fieldLoc[0]][fieldLoc[1]]) = (board[fieldLoc[0]][fieldLoc[1]], board[figLoc[0]][figLoc[1]])
+    (board[figLoc[0]][rookPos[0]], board[figLoc[0]][rookPos[1]]) = (board[figLoc[0]][rookPos[1]], board[figLoc[0]][rookPos[0]])
