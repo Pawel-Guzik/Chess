@@ -1,6 +1,9 @@
 import pygame
 from Figures import Pawn, Rook, Knight, Bishop, Queen, King, Figure, isMoveCorrect, castlingMove
 # from Mechanics import clickNavi, highlightPossibleMoves
+from player import Player
+from network import Network
+
 from Window import Window
 
 pygame.init()
@@ -35,6 +38,25 @@ board = [
 ]
 
 
+
+def decodeMove(strMove):
+    print(strMove)
+    print(type(strMove))
+    figLoc = (int(strMove[2]), int(strMove[5]))
+    fieldLoc = (int(strMove[10]), int(strMove[13]))
+
+    return figLoc, fieldLoc
+
+def encodeMove(locations):
+    figLoc = locations['figure']
+    fieldLoc = locations['field']
+
+    strMove = str((figLoc, fieldLoc))
+    print(strMove)
+    return strMove
+
+
+
 def clickNavi(mouseposition):
     x = y = 0
     for a in range(8):
@@ -53,8 +75,10 @@ def moveFigure(figLoc, fieldLoc):
 
     if board[figLoc[0]][figLoc[1]].color == 'white':
         move = 'black'
+        # network.send('bialy sie ruszyl')
     else:
         move = 'white'
+        # network.send('czarny sie ruszyl')
 
     # castling
     if type(board[figLoc[0]][figLoc[1]]) == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
@@ -91,11 +115,22 @@ isDone = False
 locations = {'figure': False, 'field': False}
 possibleMoves = []
 moveLoc = {}
+clock = pygame.time.Clock()
+network = Network()
+opponentColor = ''
+p1 = Player(network.color)
+if network.color == 'white':
+    opponentColor = 'black'
+if network.color == 'black':
+    opponentColor = 'white'
+p2 = Player(opponentColor)
 while run:
-
+    clock.tick(60)
+    print(opponentColor)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+
         click = pygame.mouse.get_pressed()[0]
         if click is True:
             clickLocation = clickNavi(pygame.mouse.get_pos())
@@ -103,23 +138,25 @@ while run:
             if board[clickLocation[0]][clickLocation[1]] != ' ':
                 if board[clickLocation[0]][clickLocation[1]].color == move:
                     locations['figure'] = clickLocation
-                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].possibleMoves(locations,
-                                                                                                        board)
+                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].possibleMoves(locations,board)
                     isMoveCorrect(possibleMoves, locations['figure'], board)
 
             if len(possibleMoves) > 0:
                 for a in possibleMoves:
                     if a == clickLocation:
                         locations['field'] = clickLocation
+                        # network.send(encodeMove(locations))
+                        locations['figure'], locations['field'] = decodeMove(network.send(encodeMove(locations)))
                         moveLoc = moveFigure(locations['figure'], locations['field'])
                         locations = {'figure': False, 'field': False}
-                        # moveLoc = moveFigure()
+
                         possibleMoves = []
                         black_king.check = black_king.isCheck(board, (int(black_king.y / 90), int(black_king.x / 90)))
                         white_king.check = white_king.isCheck(board, (int(white_king.y / 90), int(white_king.x / 90)))
                         black_king.isCheckMate(board)
                         white_king.isCheckMate(board)
 
-    window.drawBoard(possibleMoves, board, locations, moveLoc)
 
-    pygame.display.update()
+        window.drawBoard(possibleMoves, board, locations, moveLoc)
+
+        pygame.display.update()

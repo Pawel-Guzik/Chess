@@ -19,7 +19,6 @@ class Window:
         self.prevmoveColor = {'black': (149, 142, 40), 'white': (174, 167, 75)}
 
 
-
     def highlightPreviousMove(self, locations, moveLoc):
 
         squareSize = 90
@@ -48,13 +47,9 @@ class Window:
                 pygame.draw.rect(self.surface, self.prevmoveColor['black'],
                                  (moveLoc[1][1] * squareSize, moveLoc[1][0] * squareSize, squareSize, squareSize))
 
-
-
-
     def highlightPossibleMoves(self, moves, board, moveLoc):
         for x, y in moves:
             if board[x][y] != ' ':
-
                 pygame.draw.circle(self.surface, self.highlightColor, (y * 90 + 45, x * 90 + 45), 45)
 
                 if self.colors[x][y] == 'w':
@@ -67,13 +62,8 @@ class Window:
                         pygame.draw.circle(self.surface, self.prevmoveColor['black'], (y * 90 + 45, x * 90 + 45), 40)
                     else:
                         pygame.draw.circle(self.surface, self.black, (y * 90 + 45, x * 90 + 45), 40)
-
-
-
-
             else:
                 pygame.draw.circle(self.surface, self.highlightColor, (y * 90 + 45, x * 90 + 45), 15)
-
 
     def drawBoard(self, moves, board, locations, moveLoc):
         squareSize = 90
@@ -86,13 +76,9 @@ class Window:
                     pygame.draw.rect(self.surface, self.black,
                                      (i * squareSize, j * squareSize, squareSize, squareSize))
 
-
-
         self.highlightPreviousMove(locations, moveLoc)
 
-
         self.highlightPossibleMoves(moves, board, moveLoc)
-
 
         for a, line in enumerate(board):
             for b, column in enumerate(line):
