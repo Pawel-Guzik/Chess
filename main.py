@@ -41,6 +41,8 @@ board = [
 
 def decodeMove(strMove):
     print(strMove)
+    if strMove == 'white' or strMove == 'black':
+        return 'waiting'
     print(type(strMove))
     figLoc = (int(strMove[2]), int(strMove[5]))
     fieldLoc = (int(strMove[10]), int(strMove[13]))
@@ -73,12 +75,12 @@ def clickNavi(mouseposition):
 def moveFigure(figLoc, fieldLoc):
     global move
 
-    if board[figLoc[0]][figLoc[1]].color == 'white':
-        move = 'black'
-        # network.send('bialy sie ruszyl')
-    else:
-        move = 'white'
-        # network.send('czarny sie ruszyl')
+    # if board[figLoc[0]][figLoc[1]].color == 'white':
+    #     move = 'black'
+    #     # network.send('bialy sie ruszyl')
+    # else:
+    #     move = 'white'
+    #     # network.send('czarny sie ruszyl')
 
     # castling
     if type(board[figLoc[0]][figLoc[1]]) == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
@@ -124,39 +126,57 @@ if network.color == 'white':
 if network.color == 'black':
     opponentColor = 'white'
 p2 = Player(opponentColor)
+
+print(p1.color)
+
 while run:
     clock.tick(60)
-    print(opponentColor)
+    # print(move)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
 
-        click = pygame.mouse.get_pressed()[0]
-        if click is True:
-            clickLocation = clickNavi(pygame.mouse.get_pos())
+        if p1.color == move:
+            click = pygame.mouse.get_pressed()[0]
+            if click is True:
+                clickLocation = clickNavi(pygame.mouse.get_pos())
 
-            if board[clickLocation[0]][clickLocation[1]] != ' ':
-                if board[clickLocation[0]][clickLocation[1]].color == move:
-                    locations['figure'] = clickLocation
-                    possibleMoves = board[locations['figure'][0]][locations['figure'][1]].possibleMoves(locations,board)
-                    isMoveCorrect(possibleMoves, locations['figure'], board)
+                if board[clickLocation[0]][clickLocation[1]] != ' ':
+                    if board[clickLocation[0]][clickLocation[1]].color == move:
+                        locations['figure'] = clickLocation
+                        possibleMoves = board[locations['figure'][0]][locations['figure'][1]].possibleMoves(locations,board)
+                        isMoveCorrect(possibleMoves, locations['figure'], board)
 
-            if len(possibleMoves) > 0:
-                for a in possibleMoves:
-                    if a == clickLocation:
-                        locations['field'] = clickLocation
-                        # network.send(encodeMove(locations))
-                        locations['figure'], locations['field'] = decodeMove(network.send(encodeMove(locations)))
-                        moveLoc = moveFigure(locations['figure'], locations['field'])
-                        locations = {'figure': False, 'field': False}
+                if len(possibleMoves) > 0:
+                    for a in possibleMoves:
+                        if a == clickLocation:
+                            locations['field'] = clickLocation
+                            # network.send(encodeMove(locations))
+                            locations['figure'], locations['field'] = decodeMove(network.send(encodeMove(locations)))
+                            moveLoc = moveFigure(locations['figure'], locations['field'])
+                            locations = {'figure': False, 'field': False}
 
-                        possibleMoves = []
-                        black_king.check = black_king.isCheck(board, (int(black_king.y / 90), int(black_king.x / 90)))
-                        white_king.check = white_king.isCheck(board, (int(white_king.y / 90), int(white_king.x / 90)))
-                        black_king.isCheckMate(board)
-                        white_king.isCheckMate(board)
+                            possibleMoves = []
+                            black_king.check = black_king.isCheck(board, (int(black_king.y / 90), int(black_king.x / 90)))
+                            white_king.check = white_king.isCheck(board, (int(white_king.y / 90), int(white_king.x / 90)))
+                            black_king.isCheckMate(board)
+                            white_king.isCheckMate(board)
+
+        else:
+
+            try:
+                get = network.send('waiting')
+                print(get)
+                if get != 'waiting':
+                    locations['figure'], locations['field'] = decodeMove(get)
+                    moveLoc = moveFigure(locations['figure'], locations['field'])
+                    window.drawBoard(possibleMoves, board, locations, moveLoc)
+                    pygame.display.update()
+            except:
+                pass
 
 
-        window.drawBoard(possibleMoves, board, locations, moveLoc)
+    window.drawBoard(possibleMoves, board, locations, moveLoc)
+    pygame.display.update()
 
-        pygame.display.update()
