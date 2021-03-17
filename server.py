@@ -54,7 +54,9 @@ except socket.error as e:
 
 players = ['white', 'black']
 
+move = ''
 def thrededClient(conn, addr, player):
+    global move
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(players[player]))
 
@@ -66,10 +68,24 @@ def thrededClient(conn, addr, player):
                 print("Disconnected")
                 break
             else:
-                reply = data
-                pass
+                if data == 'waiting':
+                    print('someone"s is waiting')
+                    print(move, ' <-- move')
+                    if move == '':
+                        reply = 'waiting'
+                    else:
+                        reply = move
+                else:
+                    print('someone"s is moving')
+                    print(move)
+                    move = data
+                    print(move)
+                    reply = data
+
+
                 print("Received: ", data)
-            conn.sendall(str.encode(data))
+                print("Reply: ", reply)
+            conn.sendall(str.encode(reply))
         except:
             break
 
