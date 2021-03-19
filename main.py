@@ -127,7 +127,7 @@ if network.color == 'black':
     opponentColor = 'white'
 p2 = Player(opponentColor)
 
-print(p1.color)
+# print(p1.color)
 
 while run:
     clock.tick(60)
@@ -163,19 +163,18 @@ while run:
                             black_king.isCheckMate(board)
                             white_king.isCheckMate(board)
 
-        else:
+    if p1.color != move:
+        try:
+            get = network.send('waiting')
+            print(get)
+            if get != 'waiting':
+                locations['figure'], locations['field'] = decodeMove(get)
+                moveLoc = moveFigure(locations['figure'], locations['field'])
+                print(move)
+        except:
+            pass
 
-            try:
-                get = network.send('waiting')
-                print(get)
-                if get != 'waiting':
-                    locations['figure'], locations['field'] = decodeMove(get)
-                    moveLoc = moveFigure(locations['figure'], locations['field'])
-                    window.drawBoard(possibleMoves, board, locations, moveLoc)
-                    pygame.display.update()
-            except:
-                pass
-
+    move = network.send(move)
 
     window.drawBoard(possibleMoves, board, locations, moveLoc)
     pygame.display.update()
