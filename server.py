@@ -1,44 +1,5 @@
 import socket
 from _thread import *
-from Figures import Rook, Knight, Bishop, Queen, King, Pawn
-import pickle
-
-
-
-
-
-black_rooks = [Rook('black', 0, 0, 'img/C_Wieza.png'), Rook('black', 630, 0, 'img/C_Wieza.png')]
-black_knight = [Knight('black', 90, 0, 'img/C_Kon.png'), Knight('black', 540, 0, 'img/C_Kon.png')]
-black_bishop = [Bishop('black', 180, 0, 'img/C_Goniec.png'), Bishop('black', 450, 0, 'img/C_Goniec.png')]
-black_queen = Queen('black', 270, 0, 'img/C_Dama.png')
-black_king = King('black', 360, 0, 'img/C_Krol.png')
-black_pawns = [Pawn('black', x * 90, 90, 'img/C_Pion.png') for x in range(8)]
-
-
-white_rooks = [Rook('white', 0, 630, 'img/B_Wieza.png'), Rook('white', 630, 630, 'img/B_Wieza.png')]
-white_knight = [Knight('white', 90, 630, 'img/B_Kon.png'), Knight('white', 540, 630, 'img/B_Kon.png')]
-white_bishop = [Bishop('white', 180, 630, 'img/B_Goniec.png'), Bishop('white', 450, 630, 'img/B_Goniec.png')]
-white_queen = Queen('white', 270, 630, 'img/B_Dama.png')
-white_king = King('white', 360, 630, 'img/B_Krol.png')
-white_pawns = [Pawn('white', x * 90, 540, 'img/B_Pion.png') for x in range(8)]
-
-board = [
-    [black_rooks[0], black_knight[0], black_bishop[0], black_queen, black_king, black_bishop[1], black_knight[1],
-     black_rooks[1]],
-    black_pawns,
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    white_pawns,
-    [white_rooks[0], white_knight[0], white_bishop[0], white_queen, white_king, white_bishop[1], white_knight[1],
-     white_rooks[1]]
-]
-
-
-
-
-
 
 SERVER = socket.gethostbyname(socket.gethostname())
 PORT = 5555
@@ -55,8 +16,9 @@ except socket.error as e:
 players = ['white', 'black']
 
 move = ''
+turn = 'white'
 def thrededClient(conn, addr, player):
-    global move
+    global move, turn
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(players[player]))
 
@@ -75,12 +37,18 @@ def thrededClient(conn, addr, player):
                         reply = 'waiting'
                     else:
                         reply = move
+                        move = ''
+                elif data == 'white' or data == 'black':
+                    reply = turn
                 else:
-                    print('someone"s is moving')
-                    print(move)
+                    if player == 0:
+                        turn = 'black'
+                    elif player == 1:
+                        turn = 'white'
                     move = data
-                    print(move)
                     reply = data
+
+
 
 
                 print("Received: ", data)
