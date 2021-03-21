@@ -14,11 +14,11 @@ except socket.error as e:
 
 
 players = ['white', 'black']
-
+was_moving = []
 move = ''
 turn = 'white'
 def thrededClient(conn, addr, player):
-    global move, turn
+    global move, turn, was_moving
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(players[player]))
 
@@ -31,29 +31,29 @@ def thrededClient(conn, addr, player):
                 break
             else:
                 if data == 'waiting':
-                    print('someone"s is waiting')
-                    print(move, ' <-- move')
                     if move == '':
                         reply = 'waiting'
                     else:
-                        reply = move
-                        move = ''
-                elif data == 'white' or data == 'black':
-                    reply = turn
+
+                        if player in was_moving:
+                            reply = 'waiting'
+                        else:
+                            was_moving.append(player)
+                            reply = move
                 else:
-                    if player == 0:
-                        turn = 'black'
-                    elif player == 1:
-                        turn = 'white'
+                    print(data)
                     move = data
-                    reply = data
+                    reply = "got"
 
+                if len(was_moving) == 2:
+                    move = ''
+                    was_moving = []
 
-
-
-                print("Received: ", data)
-                print("Reply: ", reply)
+            # if reply != 'waiting':
+                # print(reply,f'     {player}')
+            print(reply, player)
             conn.sendall(str.encode(reply))
+
         except:
             break
 
