@@ -296,7 +296,7 @@ class King(Figure):
         # print(location)
         for a, b in opponentMoves:
             if (a, b) == location:
-                print('szach')
+                # print('szach')
                 return True
         return False
 
