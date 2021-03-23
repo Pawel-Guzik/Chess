@@ -1,5 +1,6 @@
 import pygame
 
+pygame.font.init()
 
 class Window:
     colors = [['w', 'b', 'w', 'b', 'w', 'b', 'w', 'b'],
@@ -12,11 +13,14 @@ class Window:
               ['b', 'w', 'b', 'w', 'b', 'w', 'b', 'w']]
 
     def __init__(self):
-        self.surface = pygame.display.set_mode((720, 720))
+        self.width = 900
+        self.height = 720
+        self.surface = pygame.display.set_mode((self.width, self.height))
         self.black = (107, 142, 35)
         self.white = (239, 236, 162)
         self.highlightColor = (70, 105, 73)
         self.prevmoveColor = {'black': (149, 142, 40), 'white': (174, 167, 75)}
+        self.font = pygame.font.SysFont('arial', 30)
 
 
     def highlightPreviousMove(self, locations, moveLoc):
@@ -65,7 +69,35 @@ class Window:
             else:
                 pygame.draw.circle(self.surface, self.highlightColor, (y * 90 + 45, x * 90 + 45), 15)
 
-    def drawBoard(self, moves, board, locations, moveLoc):
+
+    @staticmethod
+    def formatTime(tup):
+        minutes = str(tup[0])
+        seconds = str(tup[1])
+        if tup[1] > 9:
+            return minutes + ':' + seconds
+        else:
+            return minutes + ":0" + seconds
+
+
+    def drawInfo(self,times):
+        diplayTime = []
+        pygame.draw.rect(self.surface, (6, 26, 0), (720, 0, 180, 720))
+        player1Text = self.font.render('  PLAYER 1', True, self.black)
+        player2Text = self.font.render('  PLAYER 2', True, self.black)
+        for a in times:
+            a = Window.formatTime(divmod(a, 60))
+            diplayTime.append(a)
+        p1Time = self.font.render(f'     {diplayTime[0]}', True, self.black)
+        p2Time = self.font.render(f'     {diplayTime[1]}', True, self.black)
+        self.surface.blit(player1Text, (720, 0))
+        self.surface.blit(player2Text, (720, 680))
+        self.surface.blit(p1Time, (720, 50))
+        self.surface.blit(p2Time, (720, 630))
+
+
+
+    def drawBoard(self, moves, board, locations, moveLoc, times):
         squareSize = 90
         for i in range(8):
             for j in range(8):
@@ -84,3 +116,14 @@ class Window:
             for b, column in enumerate(line):
                 if board[a][b] != ' ':
                     self.surface.blit(board[a][b].img, (board[a][b].x, board[a][b].y))
+
+        self.drawInfo(times)
+        pygame.display.update()
+
+
+    def menuScreen(self):
+        self.surface.fill(self.black)
+        pygame.draw.rect(self.surface, self.white, (300, 285, 300, 150))
+        play = self.font.render('PLAY CHESS', True, self.black)
+        self.surface.blit(play, (360, 345))
+        pygame.display.update()
