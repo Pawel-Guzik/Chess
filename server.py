@@ -30,21 +30,22 @@ players = ['white', 'black']
 was_moving = []
 move = ''
 turn = 'white'
-
+isPromotion = False
+promoFigure = 'none'
 def encodeTime(times):
     return str(times[0]) + ' ' + str(times[1])
 
 
 def thrededClient(conn, addr, player):
-    global move, turn, was_moving
+    global move, turn, was_moving, currentPlayer, isPromotion, promoFigure
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(players[player]))
-    start_new_thread(timer, (player,))
+
 
     while True:
         try:
             data = conn.recv(2048).decode()
-
+            print(data)
             if not data:
                 print("Disconnected")
                 break
@@ -59,8 +60,20 @@ def thrededClient(conn, addr, player):
                         else:
                             was_moving.append(player)
                             reply = move
+
                 elif data == 'pTimes':
                     reply = encodeTime(pTimes)
+                elif data == 'ready':
+                    print(currentPlayer)
+                    if currentPlayer == 2:
+                        reply = 'True'
+                        start_new_thread(timer, (player,))
+                    else:
+                        reply = 'False'
+
+
+
+
                 else:
                     print(data)
                     move = data
@@ -75,7 +88,6 @@ def thrededClient(conn, addr, player):
                         turn = 'white'
 
             conn.sendall(str.encode(reply))
-
         except:
             break
 
@@ -83,7 +95,7 @@ def thrededClient(conn, addr, player):
     conn.close()
 
 
-currentPlayer = 0
+
 while True:
     server.listen()
 
