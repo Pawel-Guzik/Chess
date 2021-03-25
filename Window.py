@@ -88,8 +88,8 @@ class Window:
         for a in times:
             a = Window.formatTime(divmod(a, 60))
             diplayTime.append(a)
-        p1Time = self.font.render(f'     {diplayTime[0]}', True, self.black)
-        p2Time = self.font.render(f'     {diplayTime[1]}', True, self.black)
+        p1Time = self.font.render(f'     {diplayTime[1]}', True, self.black)
+        p2Time = self.font.render(f'     {diplayTime[0]}', True, self.black)
         self.surface.blit(player1Text, (720, 0))
         self.surface.blit(player2Text, (720, 680))
         self.surface.blit(p1Time, (720, 50))
@@ -97,7 +97,7 @@ class Window:
 
 
 
-    def drawBoard(self, moves, board, locations, moveLoc, times):
+    def drawBoard(self, moves, board, locations, moveLoc, times, move = None, promotion = False):
         squareSize = 90
         for i in range(8):
             for j in range(8):
@@ -118,6 +118,8 @@ class Window:
                     self.surface.blit(board[a][b].img, (board[a][b].x, board[a][b].y))
 
         self.drawInfo(times)
+        if promotion:
+            self.drawPromotionFigures(move)
         pygame.display.update()
 
 
@@ -127,3 +129,29 @@ class Window:
         play = self.font.render('PLAY CHESS', True, self.black)
         self.surface.blit(play, (360, 345))
         pygame.display.update()
+
+    def waitingForPlayer(self):
+        self.surface.fill(self.black)
+        com = self.font.render('WAITING FOR OTHER PLAYER...', True, self.white)
+        self.surface.blit(com, (230, 345))
+        pygame.display.update()
+
+    def drawPromotionFigures(self, move):
+        if move == 'white':
+            col = 'B'
+        elif move == 'black':
+            col = 'C'
+        bishop = pygame.image.load(f'img/{col}_Goniec.png')
+        rook = pygame.image.load(f'img/{col}_Wieza.png')
+        queen = pygame.image.load(f'img/{col}_Dama.png')
+        knight = pygame.image.load(f'img/{col}_Kon.png')
+        pygame.draw.rect(self.surface, (0, 128, 0), (720, 270, 180, 180))
+        self.surface.blit(queen, (720, 270))
+        self.surface.blit(rook, (810, 270))
+        self.surface.blit(knight, (720, 360))
+        self.surface.blit(bishop, (810, 360))
+
+        pygame.display.update()
+
+
+
