@@ -35,21 +35,25 @@ board = [
     [white_rooks[0], white_knight[0], white_bishop[0], white_queen, white_king, white_bishop[1], white_knight[1],
      white_rooks[1]]
 ]
-def choseFigure(click):
+def choseFigure(click, network):
 
     if 720 <= click[0] < 810:
-        if 270 <= click[1] < 310:
+        if 270 <= click[1] < 360:
             print('queen')
+            network.send('queen')
             return True
-        elif 310 <= click[1] < 400:
+        elif 360 <= click[1] < 450:
             print('knight')
+            network.send('knight')
             return True
     elif 810 <= click[0] < 900:
-        if 270 <= click[1] < 310:
+        if 270 <= click[1] < 360:
             print('rook')
+            network.send('rook')
             return True
-        elif 310 <= click[1] < 400:
+        elif 360 <= click[1] < 450:
             print('bishop')
+            network.send('bishop')
             return True
     return False
 def decodeTime(strTime):
@@ -141,6 +145,24 @@ promotion = 'no promotion'
 
 # def choosePromoFigure(click)
 
+def promotPawn(fieldLoc, promo_figure, move):
+    if move == 'white':
+        c = 'B_'
+    elif move == 'black':
+        c = 'C_'
+    if promo_figure == 'queen':
+        board[fieldLoc[0]][fieldLoc[1]] = Queen(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Dama.png')
+    elif promo_figure == 'bishop':
+        board[fieldLoc[0]][fieldLoc[1]] = Bishop(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Goniec.png')
+    elif promo_figure == 'knight':
+        board[fieldLoc[0]][fieldLoc[1]] = Knight(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Kon.png')
+    elif promo_figure == 'rook':
+        board[fieldLoc[0]][fieldLoc[1]] = Rook(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Wieza.png')
+
+
+
+
+
 
 def menu():
     run = True
@@ -212,13 +234,14 @@ def game():
                             if a == clickLocation:
                                 locations['field'] = clickLocation
                                 promotion = isPromotion(locations['figure'], locations['field'])
+                                #Pawn promotion
                                 while promotion:
                                     for event in pygame.event.get():
                                         if event.type == pygame.QUIT:
                                             run = False
                                         if event.type == pygame.MOUSEBUTTONDOWN:
                                             click = pygame.mouse.get_pos()
-                                            promotion = not choseFigure(click)
+                                            promotion = not choseFigure(click, network)
 
                                     pTimes = decodeTime(network.send('pTimes'))
                                     window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes, move, promotion)
@@ -228,7 +251,7 @@ def game():
                                                                       (int(black_king.y / 90), int(black_king.x / 90)))
                                 white_king.check = white_king.isCheck(board,
                                                                       (int(white_king.y / 90), int(white_king.x / 90)))
-
+        is_promotion = network.send('is promotion')
         ruch = decodeMove(network.send('waiting'))
 
         if ruch != 'waiting':
@@ -236,6 +259,10 @@ def game():
 
         if locations['figure'] and locations['field']:
             moveLoc = moveFigure(locations['figure'], locations['field'])
+            print(is_promotion)
+            if is_promotion != ' ':
+                promotPawn(locations['field'], is_promotion, move)
+                network.send('promoted')
             locations = {'figure': False, 'field': False}
             if move == 'white':
                 move = 'black'

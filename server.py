@@ -31,13 +31,14 @@ was_moving = []
 move = ''
 turn = 'white'
 isPromotion = False
-promoFigure = 'none'
+promoFigure = ' '
+asked = []
 def encodeTime(times):
     return str(times[0]) + ' ' + str(times[1])
 
 
 def thrededClient(conn, addr, player):
-    global move, turn, was_moving, currentPlayer, isPromotion, promoFigure
+    global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(players[player]))
 
@@ -70,9 +71,18 @@ def thrededClient(conn, addr, player):
                         start_new_thread(timer, (player,))
                     else:
                         reply = 'False'
+                elif data == 'queen' or data == 'knight' or data == 'rook' or data == 'bishop':
+                    promoFigure = data
+                    reply = data
 
-
-
+                elif data == 'is promotion':
+                    # if len(asked) == 2:
+                    #     promoFigure = ' '
+                    #     asked = []
+                    # asked.append(player)
+                    reply = promoFigure
+                elif data == 'promoted':
+                    promoFigure = ' '
 
                 else:
                     print(data)
