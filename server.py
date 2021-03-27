@@ -82,7 +82,10 @@ def thrededClient(conn, addr, player):
                     # asked.append(player)
                     reply = promoFigure
                 elif data == 'promoted':
-                    promoFigure = ' '
+                    asked.append(player)
+                    if len(asked) == 2:
+                        promoFigure = ' '
+                        asked = []
 
                 else:
                     print(data)

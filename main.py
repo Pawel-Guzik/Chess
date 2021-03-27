@@ -100,6 +100,14 @@ def isPromotion(figLoc, fieldLoc):
 
 def moveFigure(figLoc, fieldLoc):
     fig = type(board[figLoc[0]][figLoc[1]])
+    isMoving = board[figLoc[0]][figLoc[1]].color
+    if fig == Pawn:
+        if fieldLoc[0] - figLoc[0] == 2 or fieldLoc[0] - figLoc[0] == -2:
+            board[figLoc[0]][figLoc[1]].enPassant = True
+        else:
+            board[figLoc[0]][figLoc[1]].enPassant = False
+        print(board[figLoc[0]][figLoc[1]].enPassant)
+
     # castling
     if type(board[figLoc[0]][figLoc[1]]) == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
 
@@ -111,6 +119,9 @@ def moveFigure(figLoc, fieldLoc):
 
         moveLoc = [figLoc, fieldLoc]
 
+
+
+        Pawn.resetEnPassant(isMoving, board)
         return moveLoc
 
     if fig == Pawn or fig == King or fig == Rook:
@@ -126,7 +137,7 @@ def moveFigure(figLoc, fieldLoc):
     board[fieldLoc[0]][fieldLoc[1]], board[figLoc[0]][figLoc[1]])
 
     moveLoc = [figLoc, fieldLoc]
-
+    Pawn.resetEnPassant(isMoving, board)
     return moveLoc
 
 

@@ -42,6 +42,7 @@ class Pawn(Figure):
     def __init__(self, color, x, y, img):
         super().__init__(color, x, y, img)
         self.was_moving = False
+        self.enPassant = False
 
     def checkMove(self, board):
         pass
@@ -61,16 +62,27 @@ class Pawn(Figure):
                 if pawnLoc[1] < 7:
                     if board[pawnLoc[0] - 1][pawnLoc[1] + 1] != ' ' and board[pawnLoc[0] - 1][pawnLoc[1] + 1].color == 'black':
                         possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] + 1))
+                    # en passant
+                    if type(board[pawnLoc[0]][pawnLoc[1] + 1]) == Pawn:
+                        if board[pawnLoc[0]][pawnLoc[1] + 1].color == 'black' and board[pawnLoc[0] - 1][pawnLoc[1] + 1] == ' ' and board[pawnLoc[0]][pawnLoc[1] + 1].enPassant:
+                            possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] + 1))
 
                 # zbicie w lewo
                 if pawnLoc[1] > 0:
                     if board[pawnLoc[0] - 1][pawnLoc[1] - 1] != ' ' and board[pawnLoc[0] - 1][pawnLoc[1] - 1].color == 'black':
                         possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] - 1))
 
+                    if type(board[pawnLoc[0]][pawnLoc[1] - 1]) == Pawn:
+                        if board[pawnLoc[0]][pawnLoc[1] - 1].color == 'black' and board[pawnLoc[0] - 1][pawnLoc[1] - 1] == ' ' and board[pawnLoc[0]][pawnLoc[1] - 1].enPassant:
+                            possibleMoves.append((pawnLoc[0] - 1, pawnLoc[1] - 1))
+
+
                 # ruch o dwa do przodu
                 if self.was_moving is False and board[pawnLoc[0] - 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] - 2][
                     pawnLoc[1]] == ' ':
                     possibleMoves.append((pawnLoc[0] - 2, pawnLoc[1]))
+
+
 
         if self.color == 'black':
             # ruch do przodu
@@ -83,15 +95,42 @@ class Pawn(Figure):
                     if board[pawnLoc[0] + 1][pawnLoc[1] + 1] != ' ' and board[pawnLoc[0] + 1][pawnLoc[1] + 1].color == 'white':
                         possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] + 1))
 
+                    if type(board[pawnLoc[0]][pawnLoc[1] + 1]) == Pawn:
+                        if board[pawnLoc[0]][pawnLoc[1] + 1].color == 'white' and board[pawnLoc[0] + 1][pawnLoc[1] + 1] == ' ' and board[pawnLoc[0]][pawnLoc[1] + 1].enPassant:
+                            possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] + 1))
+
                 # zbicie w lewo
                 if pawnLoc[1] > 0:
                     if board[pawnLoc[0] + 1][pawnLoc[1] - 1] != ' ' and board[pawnLoc[0] + 1][pawnLoc[1] - 1].color == 'white':
                         possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] - 1))
 
+                    if type(board[pawnLoc[0]][pawnLoc[1] - 1]) == Pawn:
+                        if board[pawnLoc[0]][pawnLoc[1] - 1].color == 'white' and board[pawnLoc[0] + 1][pawnLoc[1] - 1] == ' ' and board[pawnLoc[0]][pawnLoc[1] - 1].enPassant:
+                            possibleMoves.append((pawnLoc[0] + 1, pawnLoc[1] - 1))
+
             if self.was_moving is False and board[pawnLoc[0] + 1][pawnLoc[1]] == ' ' and board[pawnLoc[0] + 2][pawnLoc[1]] == ' ':
                 possibleMoves.append((pawnLoc[0] + 2, pawnLoc[1]))
 
+
+
+
+
         return possibleMoves
+
+
+    @staticmethod
+    def resetEnPassant(move, board):
+        # reset = 'white'
+        if move == 'white':
+            reset = 'black'
+        elif move == 'black':
+            reset = 'white'
+
+        for a, row in enumerate(board):
+            for b, column in enumerate(row):
+                if type(board[a][b]) == Pawn:
+                    if board[a][b].color == reset:
+                        board[a][b].enPassant = False
 
 
 class Knight(Figure):
