@@ -129,10 +129,6 @@ def moveFigure(figLoc, fieldLoc):
                 board[fieldLoc[0] - 1][fieldLoc[1]] = ' '
 
 
-
-
-
-
     if fig == Pawn or fig == King or fig == Rook:
         board[figLoc[0]][figLoc[1]].was_moving = True
 
@@ -149,7 +145,6 @@ def moveFigure(figLoc, fieldLoc):
     Pawn.resetEnPassant(isMoving, board)
     return moveLoc
 
-
 def isPromotion (figLoc, fieldLoc):
     fig = type(board[figLoc[0]][figLoc[1]])
     if fig == Pawn and board[figLoc[0]][figLoc[1]].color == 'white' and fieldLoc[0] == 0:
@@ -158,10 +153,8 @@ def isPromotion (figLoc, fieldLoc):
         return True
     return False
 
-
 move = 'white'
 promotion = 'no promotion'
-
 
 # def choosePromoFigure(click)
 
@@ -178,9 +171,6 @@ def promotPawn(fieldLoc, promo_figure, move):
         board[fieldLoc[0]][fieldLoc[1]] = Knight(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Kon.png')
     elif promo_figure == 'rook':
         board[fieldLoc[0]][fieldLoc[1]] = Rook(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Wieza.png')
-
-
-
 
 
 
