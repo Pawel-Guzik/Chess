@@ -76,17 +76,17 @@ def thrededClient(conn, addr, player):
                     reply = data
 
                 elif data == 'is promotion':
-                    # if len(asked) == 2:
-                    #     promoFigure = ' '
-                    #     asked = []
-                    # asked.append(player)
                     reply = promoFigure
+
                 elif data == 'promoted':
                     asked.append(player)
                     if len(asked) == 2:
                         promoFigure = ' '
                         asked = []
 
+                # elif data == 'white won':
+                #
+                # elif data = 'black won':
                 else:
                     print(data)
                     move = data

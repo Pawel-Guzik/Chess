@@ -3,8 +3,6 @@ from Figures import Pawn, Rook, Knight, Bishop, Queen, King, isMoveCorrect, cast
 from player import Player
 from network import Network
 from Window import Window
-from time import sleep
-import threading
 
 pygame.init()
 window = Window()
@@ -109,7 +107,7 @@ def moveFigure(figLoc, fieldLoc):
         print(board[figLoc[0]][figLoc[1]].enPassant)
 
     # castling
-    if type(board[figLoc[0]][figLoc[1]]) == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
+    if fig == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
 
         if figLoc[1] - fieldLoc[1] == 2:
             castlingMove(board, figLoc, fieldLoc, (0, 3))
@@ -118,11 +116,22 @@ def moveFigure(figLoc, fieldLoc):
             castlingMove(board, figLoc, fieldLoc, (7, 5))
 
         moveLoc = [figLoc, fieldLoc]
-
-
-
         Pawn.resetEnPassant(isMoving, board)
         return moveLoc
+
+
+    # en passant move
+    if fig == Pawn and board[fieldLoc[0]][fieldLoc[1]] == ' ':
+        if fieldLoc[1] - figLoc[1] == 1 or figLoc[1] - fieldLoc[1] == 1:
+            if isMoving == 'white':
+                board[fieldLoc[0] + 1][fieldLoc[1]] = ' '
+            elif isMoving == 'black':
+                board[fieldLoc[0] - 1][fieldLoc[1]] = ' '
+
+
+
+
+
 
     if fig == Pawn or fig == King or fig == Rook:
         board[figLoc[0]][figLoc[1]].was_moving = True
@@ -204,6 +213,8 @@ def game():
     opponentColor = ''
     promotion = False
     p1 = Player(network.color)
+    change_move = {'white': 'black', 'black': 'white'}
+
     x = lambda a: True if a == 'True' else False
     isOpponent = x(network.send('ready'))
 
@@ -275,13 +286,13 @@ def game():
                 promotPawn(locations['field'], is_promotion, move)
                 network.send('promoted')
             locations = {'figure': False, 'field': False}
-            if move == 'white':
-                move = 'black'
-            else:
-                move = 'white'
+            move = change_move[move]
 
-        black_king.isCheckMate(board)
-        white_king.isCheckMate(board)
+        if black_king.isCheckMate(board):
+            print('białe wygrały koniec gry')
+        if white_king.isCheckMate(board):
+            print('czarne wygrały koniec gry')
+
         pTimes = decodeTime(network.send('pTimes'))
         window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes)
 

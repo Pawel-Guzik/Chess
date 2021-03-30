@@ -114,7 +114,6 @@ class Pawn(Figure):
 
 
 
-
         return possibleMoves
 
 
@@ -354,9 +353,9 @@ class King(Figure):
                         moves = board[a][b].possibleMoves(locations, board)
                         possibleMoves = isMoveCorrect(moves, locations['figure'], board)
                         if len(possibleMoves) > 0:
-                            return True
+                            return False
         print(f'{self.color} sszach mat')
-        return False
+        return True
 
     @staticmethod
     def lookForKing(color, board):
