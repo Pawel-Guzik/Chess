@@ -1,6 +1,7 @@
 import socket
 from _thread import *
 from time import sleep
+from gui import db
 import pickle
 SERVER = socket.gethostbyname(socket.gethostname())
 PORT = 5555
@@ -33,12 +34,25 @@ turn = 'white'
 isPromotion = False
 promoFigure = ' '
 asked = []
+nicknames = []
+winner = ''
 def encodeTime(times):
     return str(times[0]) + ' ' + str(times[1])
 
 
+
+def writeResultTodatabase(winner, nicknames):
+    print('zapisuje...')
+    mycursor = db.cursor()
+    values = (nicknames[0], nicknames[1], nicknames[winner])
+    mycursor.execute("INSERT INTO game_history (P1_nick, P2_nick, winner) VALUES (%s,%s,%s)",values)
+    db.commit()
+    print('zapisałem')
+
+
+
 def thrededClient(conn, addr, player):
-    global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked
+    global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked, nicknames, winner
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(players[player]))
 
@@ -84,9 +98,27 @@ def thrededClient(conn, addr, player):
                         promoFigure = ' '
                         asked = []
 
-                # elif data == 'white won':
-                #
-                # elif data = 'black won':
+                elif data == 'nicknames':
+
+                    reply = str(nicknames[0]) + ' ' + str(nicknames[1])
+                    print(nicknames, type(nicknames))
+
+                elif 'nickname' in data:
+                    tab = data.split()
+                    nicknames.append(tab[1])
+                    reply = 'ok'
+                    print(nicknames)
+
+                elif data == 'white won':
+                    if winner == '':
+                        winner = 0
+                        writeResultTodatabase(winner, nicknames)
+                elif data == 'black won':
+                    if winner == '':
+                        winner = 1
+                        writeResultTodatabase(winner,nicknames)
+
+
                 else:
                     print(data)
                     move = data

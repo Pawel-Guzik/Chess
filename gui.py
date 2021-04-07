@@ -12,14 +12,15 @@ db = mysql.connector.connect(
 )
 
 
-class Login(tk.Frame):
+class Gui(tk.Frame):
 
     def __init__(self, *args, **kwargs):
         self.root = self.rt()
         self.black = '#6B8E23'
         self.white = '#EFECA2'
         self.startGame = False
-        self.requestUser = ""
+        self.loggedUser = ""
+        self.visible = True
 
         tk.Frame.__init__(self, self.root, bg=self.black, *args, **kwargs)
         self.nicknameLabel = tk.Label(self, text="NICKNAME", pady=10, bg=self.black, font='arial', fg=self.white)
@@ -60,7 +61,7 @@ class Login(tk.Frame):
         mycursor.execute("SELECT nickname, password FROM user WHERE nickname = %s and password = %s", (nick, passw))
         check = mycursor.fetchone()
         if check is not None:
-            self.requestUser = check[0]
+            self.loggedUser = check[0]
             self.menu()
         else:
             print("NIEZALOGOWANO")
@@ -134,20 +135,23 @@ class Login(tk.Frame):
 
     def play(self):
         self.startGame = True
-        self.root.destroy()
-        pass
+        self.visible = False
+        self.playButton['state'] = tk.DISABLED
+        self.root.withdraw()
+        print('chowam')
+
 
     def gameHistory(self):
         self.resetGrid()
         color = 'black'
         mycursor = db.cursor()
-        mycursor.execute("SELECT * FROM game_history WHERE P1_nick=%s or P2_nick=%s", (self.requestUser, self.requestUser))
+        mycursor.execute("SELECT * FROM game_history WHERE P1_nick=%s or P2_nick=%s", (self.loggedUser, self.loggedUser))
         allGames = mycursor.fetchall()
         tk.Label(self, text="GAME HISTORY", pady=4, bg=self.black, font=('arial', 25), fg=self.white).grid(row=0, column=0)
         for row_number, game in enumerate(allGames):
             print(game)
             ltxt = f'{row_number}. {game[1]} vs {game[2]}'
-            if game[3] == self.requestUser:
+            if game[3] == self.loggedUser:
                 color = '#33ff00'
             else:
                 color = 'red'

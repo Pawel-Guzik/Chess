@@ -3,7 +3,9 @@ from Figures import Pawn, Rook, Knight, Bishop, Queen, King, isMoveCorrect, cast
 from player import Player
 from network import Network
 from Window import Window
-from gui import Login, db
+from gui import Gui
+
+
 
 pygame.init()
 # window = Window()
@@ -152,6 +154,7 @@ def isPromotion (figLoc, fieldLoc):
         return True
     return False
 
+
 move = 'white'
 promotion = 'no promotion'
 
@@ -172,11 +175,6 @@ def promotPawn(fieldLoc, promo_figure, move):
         board[fieldLoc[0]][fieldLoc[1]] = Rook(move, fieldLoc[1]*90, fieldLoc[0]*90, f'img/{c}Wieza.png')
 
 
-
-
-
-
-
 def menu():
 
     run = True
@@ -191,38 +189,37 @@ def menu():
                 if 300 <= click[0] <= 600:
                     if 285 <= click[1] <= 435:
                         game()
-
-        window.menuScreen()
+                        print('jestem')
+                        run = False
+            if run:
+                window.menuScreen()
 
 
 def game():
+    global nickname, move, promotion
+    promotion = False
     run = True
-    global move
     locations = {'figure': False, 'field': False}
+    change_move = {'white': 'black', 'black': 'white'}
     possibleMoves = []
+    nicknames = []
     moveLoc = {}
-    global promotion
+
     clock = pygame.time.Clock()
     network = Network()
-    opponentColor = ''
-    promotion = False
     p1 = Player(network.color)
-    change_move = {'white': 'black', 'black': 'white'}
-
+    network.send(f'nickname {nickname}')
     x = lambda a: True if a == 'True' else False
     isOpponent = x(network.send('ready'))
 
+    # waiting for second player to connect
     while not isOpponent:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
         window.waitingForPlayer()
         isOpponent = x(network.send('ready'))
-    if network.color == 'white':
-        opponentColor = 'black'
-    if network.color == 'black':
-        opponentColor = 'white'
-    p2 = Player(opponentColor)
+
 
     print("Player ", p1.color)
 
@@ -231,6 +228,7 @@ def game():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.quit()
                 run = False
 
             if p1.color == move:
@@ -260,7 +258,7 @@ def game():
                                             promotion = not choseFigure(click, network)
 
                                     pTimes = decodeTime(network.send('pTimes'))
-                                    window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes, move, promotion)
+                                    window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes, nicknames, move, promotion)
                                 network.send(encodeMove(locations))
                                 possibleMoves = []
                                 black_king.check = black_king.isCheck(board,
@@ -283,22 +281,38 @@ def game():
             move = change_move[move]
 
         if black_king.isCheckMate(board):
+            network.send('white won')
             print('białe wygrały koniec gry')
+            pygame.quit()
+            break
         if white_king.isCheckMate(board):
+            network.send('black won')
             print('czarne wygrały koniec gry')
+            pygame.quit()
+            break
+
+        if nicknames == []:
+            nicknames = network.send('nicknames')
+            print(nicknames)
 
         pTimes = decodeTime(network.send('pTimes'))
-        window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes)
+        window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes, nicknames)
 
+welcomeWindow = Gui()
+welcomeWindow.place(relx=.5, rely=.5, anchor="center")
+loop_active = True
+isWindowVisible = True
 
-first = Login()
-first.place(relx=.5, rely=.5, anchor="center")
-first.root.mainloop()
+while loop_active:
+    welcomeWindow.root.update()
 
+    if welcomeWindow.startGame:
+        nickname = welcomeWindow.loggedUser
+        print(nickname)
+        window = Window()
+        menu()
+        welcomeWindow.startGame = False
 
-
-
-if first.startGame:
-    window = Window()
-    menu()
-# game()
+    elif welcomeWindow.visible == False:
+        welcomeWindow.visible = True
+        welcomeWindow.root.deiconify()

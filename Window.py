@@ -80,11 +80,12 @@ class Window:
             return minutes + ":0" + seconds
 
 
-    def drawInfo(self,times):
+    def drawInfo(self,times, nicknames):
         diplayTime = []
+        nicknames = nicknames.split()
         pygame.draw.rect(self.surface, (6, 26, 0), (720, 0, 180, 720))
-        player1Text = self.font.render('  PLAYER 1', True, self.black)
-        player2Text = self.font.render('  PLAYER 2', True, self.black)
+        player1Text = self.font.render(f' {nicknames[1]}', True, self.black)
+        player2Text = self.font.render(f' {nicknames[0]}', True, self.black)
         for a in times:
             a = Window.formatTime(divmod(a, 60))
             diplayTime.append(a)
@@ -97,7 +98,7 @@ class Window:
 
 
 
-    def drawBoard(self, moves, board, locations, moveLoc, times, move = None, promotion = False):
+    def drawBoard(self, moves, board, locations, moveLoc, times, nicknames ,move = None, promotion = False,):
         squareSize = 90
         for i in range(8):
             for j in range(8):
@@ -117,7 +118,7 @@ class Window:
                 if board[a][b] != ' ':
                     self.surface.blit(board[a][b].img, board[a][b].imgLoc)
 
-        self.drawInfo(times)
+        self.drawInfo(times, nicknames)
         if promotion:
             self.drawPromotionFigures(move)
         pygame.display.update()
