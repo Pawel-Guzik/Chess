@@ -115,7 +115,7 @@ class Window:
         for a, line in enumerate(board):
             for b, column in enumerate(line):
                 if board[a][b] != ' ':
-                    self.surface.blit(board[a][b].img, (board[a][b].x, board[a][b].y))
+                    self.surface.blit(board[a][b].img, board[a][b].imgLoc)
 
         self.drawInfo(times)
         if promotion:

@@ -3,9 +3,10 @@ from Figures import Pawn, Rook, Knight, Bishop, Queen, King, isMoveCorrect, cast
 from player import Player
 from network import Network
 from Window import Window
+from gui import Login, db
 
 pygame.init()
-window = Window()
+# window = Window()
 
 black_rooks = [Rook('black', 0, 0, 'img/C_Wieza.png'), Rook('black', 630, 0, 'img/C_Wieza.png')]
 black_knight = [Knight('black', 90, 0, 'img/C_Kon.png'), Knight('black', 540, 0, 'img/C_Kon.png')]
@@ -33,27 +34,27 @@ board = [
     [white_rooks[0], white_knight[0], white_bishop[0], white_queen, white_king, white_bishop[1], white_knight[1],
      white_rooks[1]]
 ]
+
+
 def choseFigure(click, network):
 
     if 720 <= click[0] < 810:
         if 270 <= click[1] < 360:
-            print('queen')
             network.send('queen')
             return True
         elif 360 <= click[1] < 450:
-            print('knight')
             network.send('knight')
             return True
     elif 810 <= click[0] < 900:
         if 270 <= click[1] < 360:
-            print('rook')
             network.send('rook')
             return True
         elif 360 <= click[1] < 450:
-            print('bishop')
             network.send('bishop')
             return True
     return False
+
+
 def decodeTime(strTime):
     times = strTime.split()
     return int(times[0]), int(times[1])
@@ -128,22 +129,20 @@ def moveFigure(figLoc, fieldLoc):
             elif isMoving == 'black':
                 board[fieldLoc[0] - 1][fieldLoc[1]] = ' '
 
-
     if fig == Pawn or fig == King or fig == Rook:
         board[figLoc[0]][figLoc[1]].was_moving = True
 
-    board[figLoc[0]][figLoc[1]].y = fieldLoc[0] * 90
-    board[figLoc[0]][figLoc[1]].x = fieldLoc[1] * 90
+    board[figLoc[0]][figLoc[1]].imgLoc = fieldLoc
 
     if board[fieldLoc[0]][fieldLoc[1]] != ' ':
         board[fieldLoc[0]][fieldLoc[1]] = ' '
 
-    (board[figLoc[0]][figLoc[1]], board[fieldLoc[0]][fieldLoc[1]]) = (
-    board[fieldLoc[0]][fieldLoc[1]], board[figLoc[0]][figLoc[1]])
+    (board[figLoc[0]][figLoc[1]], board[fieldLoc[0]][fieldLoc[1]]) = (board[fieldLoc[0]][fieldLoc[1]], board[figLoc[0]][figLoc[1]])
 
     moveLoc = [figLoc, fieldLoc]
     Pawn.resetEnPassant(isMoving, board)
     return moveLoc
+
 
 def isPromotion (figLoc, fieldLoc):
     fig = type(board[figLoc[0]][figLoc[1]])
@@ -174,7 +173,12 @@ def promotPawn(fieldLoc, promo_figure, move):
 
 
 
+
+
+
+
 def menu():
+
     run = True
     while run:
         for event in pygame.event.get():
@@ -287,5 +291,14 @@ def game():
         window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes)
 
 
-menu()
+first = Login()
+first.place(relx=.5, rely=.5, anchor="center")
+first.root.mainloop()
+
+
+
+
+if first.startGame:
+    window = Window()
+    menu()
 # game()

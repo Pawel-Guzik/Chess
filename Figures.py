@@ -3,7 +3,7 @@ import pygame
 
 class Figure:
     """
-    Parent Class for all figures
+    Figure - Parent Class for all figures
     """
 
     def __init__(self, color, x, y, img):
@@ -18,6 +18,16 @@ class Figure:
 
     def __str__(self):
         return f'{self.color} {type(self).__name__} ({self.x},{self.y})'
+
+    @property
+    def imgLoc(self):
+        return self.x, self.y
+
+    @imgLoc.setter
+    def imgLoc(self, fieldLoc):
+        self.x = fieldLoc[1] * 90
+        self.y = fieldLoc[0] * 90
+
 
     def checkLongMoves(self, board, possibleMoves, row, column):
         if board[row][column] == ' ':
@@ -44,8 +54,6 @@ class Pawn(Figure):
         self.was_moving = False
         self.enPassant = False
 
-    def checkMove(self, board):
-        pass
 
     def possibleMoves(self, locations, board):
         pawnLoc = locations['figure']
@@ -395,7 +403,6 @@ class King(Figure):
         return possibleMoves
 
 
-
 def isMoveCorrect(moves, figureLoc, board):
     movesToDel = []
     color = board[figureLoc[0]][figureLoc[1]].color
@@ -435,10 +442,8 @@ def opponentPossibleMoves(board, colors):
                 pass
     return allMoves
 
-
 def castlingMove(board, figLoc, fieldLoc, rookPos):
-    board[figLoc[0]][figLoc[1]].y = fieldLoc[0] * 90
-    board[figLoc[0]][figLoc[1]].x = fieldLoc[1] * 90
-    board[figLoc[0]][rookPos[0]].x = rookPos[1]*90
+    board[figLoc[0]][figLoc[1]].imgLoc = fieldLoc
+    board[figLoc[0]][rookPos[0]].imgLoc = rookPos
     (board[figLoc[0]][figLoc[1]], board[fieldLoc[0]][fieldLoc[1]]) = (board[fieldLoc[0]][fieldLoc[1]], board[figLoc[0]][figLoc[1]])
     (board[figLoc[0]][rookPos[0]], board[figLoc[0]][rookPos[1]]) = (board[figLoc[0]][rookPos[1]], board[figLoc[0]][rookPos[0]])
