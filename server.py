@@ -14,9 +14,6 @@ try:
 except socket.error as e:
     str(e)
 
-
-
-
 def timer(player):
     global turn, players, pTimes
     seconds = 10*60
@@ -36,20 +33,28 @@ promoFigure = ' '
 asked = []
 nicknames = []
 winner = ''
+
+
 def encodeTime(times):
     return str(times[0]) + ' ' + str(times[1])
 
 
-
 def writeResultTodatabase(winner, nicknames):
-    print('zapisuje...')
     mycursor = db.cursor()
     values = (nicknames[0], nicknames[1], nicknames[winner])
     mycursor.execute("INSERT INTO game_history (P1_nick, P2_nick, winner) VALUES (%s,%s,%s)",values)
     db.commit()
-    print('zapisałem')
-
-
+    mycursor.execute("SELECT nickname, points FROM user WHERE nickname IN (%s, %s)", (nicknames[0], nicknames[1]))
+    records = mycursor.fetchall()
+    for x in records:
+        points = x[1]
+        if x[0] == nicknames[winner]:
+            points += 9
+        else:
+            points -= 9
+            print(x[0], points)
+        mycursor.execute("UPDATE user SET points = %s WHERE nickname = %s", (points, x[0]))
+        db.commit()
 
 def thrededClient(conn, addr, player):
     global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked, nicknames, winner
@@ -99,15 +104,12 @@ def thrededClient(conn, addr, player):
                         asked = []
 
                 elif data == 'nicknames':
-
                     reply = str(nicknames[0]) + ' ' + str(nicknames[1])
-                    print(nicknames, type(nicknames))
 
                 elif 'nickname' in data:
                     tab = data.split()
                     nicknames.append(tab[1])
                     reply = 'ok'
-                    print(nicknames)
 
                 elif data == 'white won':
                     if winner == '':
@@ -118,9 +120,7 @@ def thrededClient(conn, addr, player):
                         winner = 1
                         writeResultTodatabase(winner,nicknames)
 
-
                 else:
-                    print(data)
                     move = data
                     reply = "got"
 

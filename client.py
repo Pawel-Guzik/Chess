@@ -80,11 +80,11 @@ def encodeMove(locations):
 def clickNavi(mouseposition):
     x = y = 0
     for a in range(8):
-        if mouseposition[0] >= a * 90 and mouseposition[0] < a * 90 + 90:
+        if a * 90 <= mouseposition[0] < a * 90 + 90:
             x = a
             break
     for a in range(8):
-        if mouseposition[1] >= a * 90 and mouseposition[1] < a * 90 + 90:
+        if a * 90 <= mouseposition[1] < a * 90 + 90:
             y = a
             break
     return y, x
@@ -107,7 +107,7 @@ def moveFigure(figLoc, fieldLoc):
             board[figLoc[0]][figLoc[1]].enPassant = True
         else:
             board[figLoc[0]][figLoc[1]].enPassant = False
-        print(board[figLoc[0]][figLoc[1]].enPassant)
+
 
     # castling
     if fig == King and (figLoc[1] - fieldLoc[1] == 2 or fieldLoc[1] - figLoc[1] == 2):
@@ -189,7 +189,6 @@ def menu():
                 if 300 <= click[0] <= 600:
                     if 285 <= click[1] <= 435:
                         game()
-                        print('jestem')
                         run = False
             if run:
                 window.menuScreen()
@@ -219,7 +218,6 @@ def game():
                 run = False
         window.waitingForPlayer()
         isOpponent = x(network.send('ready'))
-
 
     print("Player ", p1.color)
 
@@ -273,7 +271,6 @@ def game():
 
         if locations['figure'] and locations['field']:
             moveLoc = moveFigure(locations['figure'], locations['field'])
-            print(is_promotion)
             if is_promotion != ' ':
                 promotPawn(locations['field'], is_promotion, move)
                 network.send('promoted')
@@ -282,18 +279,15 @@ def game():
 
         if black_king.isCheckMate(board):
             network.send('white won')
-            print('białe wygrały koniec gry')
             pygame.quit()
             break
         if white_king.isCheckMate(board):
             network.send('black won')
-            print('czarne wygrały koniec gry')
             pygame.quit()
             break
 
         if nicknames == []:
             nicknames = network.send('nicknames')
-            print(nicknames)
 
         pTimes = decodeTime(network.send('pTimes'))
         window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes, nicknames)
@@ -304,15 +298,23 @@ loop_active = True
 isWindowVisible = True
 
 while loop_active:
-    welcomeWindow.root.update()
 
-    if welcomeWindow.startGame:
-        nickname = welcomeWindow.loggedUser
-        print(nickname)
-        window = Window()
-        menu()
-        welcomeWindow.startGame = False
+    if not welcomeWindow.isRunning:
+        welcomeWindow.root.destroy()
+        break
+    else:
+        welcomeWindow.root.update()
 
-    elif welcomeWindow.visible == False:
-        welcomeWindow.visible = True
-        welcomeWindow.root.deiconify()
+        if welcomeWindow.startGame:
+            nickname = welcomeWindow.loggedUser
+            window = Window()
+            menu()
+            welcomeWindow.startGame = False
+
+        elif welcomeWindow.visible == False:
+            welcomeWindow.visible = True
+
+            welcomeWindow.root.deiconify()
+            welcomeWindow.resetGrid()
+            welcomeWindow.login()
+
