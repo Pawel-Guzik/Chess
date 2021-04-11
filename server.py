@@ -2,7 +2,7 @@ import socket
 from _thread import *
 from time import sleep
 from gui import db
-import pickle
+from game import Game
 SERVER = socket.gethostbyname(socket.gethostname())
 PORT = 5555
 ADDR = (SERVER, PORT)
@@ -22,21 +22,21 @@ def timer(player):
             pTimes[player] -= 1
             sleep(1)
 
-currentPlayer = 0
-pTimes = [600, 600]
-players = ['white', 'black']
-was_moving = []
-move = ''
-turn = 'white'
-isPromotion = False
-promoFigure = ' '
-asked = []
-nicknames = []
-winner = ''
+
+# pTimes = [600, 600]
+# players = ['white', 'black']
+# was_moving = []
+# move = ''
+# turn = 'white'
+# isPromotion = False
+# promoFigure = ' '
+# asked = []
+# nicknames = []
+# winner = ''
 
 
-def encodeTime(times):
-    return str(times[0]) + ' ' + str(times[1])
+# def encodeTime(times):
+#     return str(times[0]) + ' ' + str(times[1])
 
 
 def writeResultTodatabase(winner, nicknames):
@@ -56,10 +56,11 @@ def writeResultTodatabase(winner, nicknames):
         mycursor.execute("UPDATE user SET points = %s WHERE nickname = %s", (points, x[0]))
         db.commit()
 
-def thrededClient(conn, addr, player):
-    global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked, nicknames, winner
+def thrededClient(conn, addr, player, gameId):
+    # global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked, nicknames, winner
+    global games
     print(f'[NEW CONNECTION] {addr} connected')
-    conn.send(str.encode(players[player]))
+    conn.send(str.encode(games[gameId].players[player]))
 
 
     while True:
@@ -71,66 +72,66 @@ def thrededClient(conn, addr, player):
                 break
             else:
                 if data == 'waiting':
-                    if move == '':
+                    if games[gameId].move == '':
                         reply = 'waiting'
                     else:
 
-                        if player in was_moving:
+                        if player in games[gameId].was_moving:
                             reply = 'waiting'
                         else:
-                            was_moving.append(player)
-                            reply = move
+                            games[gameId].was_moving.append(player)
+                            reply = games[gameId].move
 
                 elif data == 'pTimes':
-                    reply = encodeTime(pTimes)
+                    reply = games[gameId].encodeTime()
                 elif data == 'ready':
-                    print(currentPlayer)
-                    if currentPlayer == 2:
+                    print(player)
+                    if games[gameId].areTwoPlayers == True:
                         reply = 'True'
-                        start_new_thread(timer, (player,))
+                        start_new_thread(games[gameId].timer, (player,))
                     else:
                         reply = 'False'
                 elif data == 'queen' or data == 'knight' or data == 'rook' or data == 'bishop':
-                    promoFigure = data
+                    games[gameId].promoFigure = data
                     reply = data
 
                 elif data == 'is promotion':
-                    reply = promoFigure
+                    reply = games[gameId].promoFigure
 
                 elif data == 'promoted':
-                    asked.append(player)
-                    if len(asked) == 2:
-                        promoFigure = ' '
-                        asked = []
+                    games[gameId].asked.append(player)
+                    if len(games[gameId].asked) == 2:
+                        games[gameId].promoFigure = ' '
+                        games[gameId].asked = []
 
                 elif data == 'nicknames':
-                    reply = str(nicknames[0]) + ' ' + str(nicknames[1])
+                    reply = str(games[gameId].nicknames[0]) + ' ' + str(games[gameId].nicknames[1])
 
                 elif 'nickname' in data:
                     tab = data.split()
-                    nicknames.append(tab[1])
+                    games[gameId].nicknames.append(tab[1])
                     reply = 'ok'
 
                 elif data == 'white won':
-                    if winner == '':
-                        winner = 0
-                        writeResultTodatabase(winner, nicknames)
+                    if games[gameId].winner == '':
+                        games[gameId].winner = 0
+                        writeResultTodatabase(games[gameId].winner, games[gameId].nicknames)
                 elif data == 'black won':
-                    if winner == '':
-                        winner = 1
-                        writeResultTodatabase(winner,nicknames)
+                    if games[gameId].winner == '':
+                        games[gameId].winner = 1
+                        writeResultTodatabase(games[gameId].winner,games[gameId].nicknames)
 
                 else:
-                    move = data
+                    games[gameId].move = data
                     reply = "got"
 
-                if len(was_moving) == 2:
-                    move = ''
-                    was_moving = []
-                    if turn == 'white':
-                        turn = 'black'
+                if len(games[gameId].was_moving) == 2:
+                    games[gameId].move = ''
+                    games[gameId].was_moving = []
+                    if games[gameId].turn == 'white':
+                        games[gameId].turn = 'black'
                     else:
-                        turn = 'white'
+                        games[gameId].turn = 'white'
 
             conn.sendall(str.encode(reply))
         except:
@@ -141,11 +142,20 @@ def thrededClient(conn, addr, player):
 
 
 
+games = {}
+idCounter = 0
 while True:
     server.listen()
-
+    idCounter += 1
     conn, addr = server.accept()
-    print("Connected to:", addr)
+    gameId = int((idCounter - 1)/2)
 
-    start_new_thread(thrededClient, (conn, addr, currentPlayer))
-    currentPlayer += 1
+    if idCounter % 2 == 1:
+        player = 0
+        games[gameId] = Game(gameId)
+    else:
+        player = 1
+        games[gameId].areTwoPlayers = True
+
+
+    start_new_thread(thrededClient, (conn, addr, player, gameId))

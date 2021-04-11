@@ -134,7 +134,7 @@ class Gui(tk.Frame):
     def play(self):
         self.startGame = True
         self.visible = False
-        self.playButton['state'] = tk.DISABLED
+        # self.playButton['state'] = tk.DISABLED
         self.root.withdraw()
 
 

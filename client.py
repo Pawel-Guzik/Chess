@@ -1,41 +1,40 @@
 import pygame
 from Figures import Pawn, Rook, Knight, Bishop, Queen, King, isMoveCorrect, castlingMove
-from player import Player
 from network import Network
 from Window import Window
 from gui import Gui
 
 
 
-pygame.init()
+# pygame.init()
 # window = Window()
 
-black_rooks = [Rook('black', 0, 0, 'img/C_Wieza.png'), Rook('black', 630, 0, 'img/C_Wieza.png')]
-black_knight = [Knight('black', 90, 0, 'img/C_Kon.png'), Knight('black', 540, 0, 'img/C_Kon.png')]
-black_bishop = [Bishop('black', 180, 0, 'img/C_Goniec.png'), Bishop('black', 450, 0, 'img/C_Goniec.png')]
-black_queen = Queen('black', 270, 0, 'img/C_Dama.png')
-black_king = King('black', 360, 0, 'img/C_Krol.png')
-black_pawns = [Pawn('black', x * 90, 90, 'img/C_Pion.png') for x in range(8)]
-
-white_rooks = [Rook('white', 0, 630, 'img/B_Wieza.png'), Rook('white', 630, 630, 'img/B_Wieza.png')]
-white_knight = [Knight('white', 90, 630, 'img/B_Kon.png'), Knight('white', 540, 630, 'img/B_Kon.png')]
-white_bishop = [Bishop('white', 180, 630, 'img/B_Goniec.png'), Bishop('white', 450, 630, 'img/B_Goniec.png')]
-white_queen = Queen('white', 270, 630, 'img/B_Dama.png')
-white_king = King('white', 360, 630, 'img/B_Krol.png')
-white_pawns = [Pawn('white', x * 90, 540, 'img/B_Pion.png') for x in range(8)]
-
-board = [
-    [black_rooks[0], black_knight[0], black_bishop[0], black_queen, black_king, black_bishop[1], black_knight[1],
-     black_rooks[1]],
-    black_pawns,
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    white_pawns,
-    [white_rooks[0], white_knight[0], white_bishop[0], white_queen, white_king, white_bishop[1], white_knight[1],
-     white_rooks[1]]
-]
+# black_rooks = [Rook('black', 0, 0, 'img/C_Wieza.png'), Rook('black', 630, 0, 'img/C_Wieza.png')]
+# black_knight = [Knight('black', 90, 0, 'img/C_Kon.png'), Knight('black', 540, 0, 'img/C_Kon.png')]
+# black_bishop = [Bishop('black', 180, 0, 'img/C_Goniec.png'), Bishop('black', 450, 0, 'img/C_Goniec.png')]
+# black_queen = Queen('black', 270, 0, 'img/C_Dama.png')
+# black_king = King('black', 360, 0, 'img/C_Krol.png')
+# black_pawns = [Pawn('black', x * 90, 90, 'img/C_Pion.png') for x in range(8)]
+#
+# white_rooks = [Rook('white', 0, 630, 'img/B_Wieza.png'), Rook('white', 630, 630, 'img/B_Wieza.png')]
+# white_knight = [Knight('white', 90, 630, 'img/B_Kon.png'), Knight('white', 540, 630, 'img/B_Kon.png')]
+# white_bishop = [Bishop('white', 180, 630, 'img/B_Goniec.png'), Bishop('white', 450, 630, 'img/B_Goniec.png')]
+# white_queen = Queen('white', 270, 630, 'img/B_Dama.png')
+# white_king = King('white', 360, 630, 'img/B_Krol.png')
+# white_pawns = [Pawn('white', x * 90, 540, 'img/B_Pion.png') for x in range(8)]
+#
+# board = [
+#     [black_rooks[0], black_knight[0], black_bishop[0], black_queen, black_king, black_bishop[1], black_knight[1],
+#      black_rooks[1]],
+#     black_pawns,
+#     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+#     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+#     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+#     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+#     white_pawns,
+#     [white_rooks[0], white_knight[0], white_bishop[0], white_queen, white_king, white_bishop[1], white_knight[1],
+#      white_rooks[1]]
+# ]
 
 
 def choseFigure(click, network):
@@ -176,7 +175,6 @@ def promotPawn(fieldLoc, promo_figure, move):
 
 
 def menu():
-
     run = True
     while run:
         for event in pygame.event.get():
@@ -206,7 +204,7 @@ def game():
 
     clock = pygame.time.Clock()
     network = Network()
-    p1 = Player(network.color)
+    p1Color = network.color
     network.send(f'nickname {nickname}')
     x = lambda a: True if a == 'True' else False
     isOpponent = x(network.send('ready'))
@@ -219,7 +217,7 @@ def game():
         window.waitingForPlayer()
         isOpponent = x(network.send('ready'))
 
-    print("Player ", p1.color)
+    print("Player ", p1Color)
 
     while run:
         clock.tick(60)
@@ -229,7 +227,7 @@ def game():
                 pygame.quit()
                 run = False
 
-            if p1.color == move:
+            if p1Color == move:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     click = pygame.mouse.get_pos()
                     clickLocation = clickNavi(click)
@@ -279,11 +277,11 @@ def game():
 
         if black_king.isCheckMate(board):
             network.send('white won')
-            pygame.quit()
+            # pygame.quit()
             break
         if white_king.isCheckMate(board):
             network.send('black won')
-            pygame.quit()
+            # pygame.quit()
             break
 
         if nicknames == []:
@@ -306,7 +304,39 @@ while loop_active:
         welcomeWindow.root.update()
 
         if welcomeWindow.startGame:
+            black_rooks = [Rook('black', 0, 0, 'img/C_Wieza.png'), Rook('black', 630, 0, 'img/C_Wieza.png')]
+            black_knight = [Knight('black', 90, 0, 'img/C_Kon.png'), Knight('black', 540, 0, 'img/C_Kon.png')]
+            black_bishop = [Bishop('black', 180, 0, 'img/C_Goniec.png'), Bishop('black', 450, 0, 'img/C_Goniec.png')]
+            black_queen = Queen('black', 270, 0, 'img/C_Dama.png')
+            black_king = King('black', 360, 0, 'img/C_Krol.png')
+            black_pawns = [Pawn('black', x * 90, 90, 'img/C_Pion.png') for x in range(8)]
+
+            white_rooks = [Rook('white', 0, 630, 'img/B_Wieza.png'), Rook('white', 630, 630, 'img/B_Wieza.png')]
+            white_knight = [Knight('white', 90, 630, 'img/B_Kon.png'), Knight('white', 540, 630, 'img/B_Kon.png')]
+            white_bishop = [Bishop('white', 180, 630, 'img/B_Goniec.png'),
+                            Bishop('white', 450, 630, 'img/B_Goniec.png')]
+            white_queen = Queen('white', 270, 630, 'img/B_Dama.png')
+            white_king = King('white', 360, 630, 'img/B_Krol.png')
+            white_pawns = [Pawn('white', x * 90, 540, 'img/B_Pion.png') for x in range(8)]
+
+            board = [
+                [black_rooks[0], black_knight[0], black_bishop[0], black_queen, black_king, black_bishop[1],
+                 black_knight[1],
+                 black_rooks[1]],
+                black_pawns,
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+                white_pawns,
+                [white_rooks[0], white_knight[0], white_bishop[0], white_queen, white_king, white_bishop[1],
+                 white_knight[1],
+                 white_rooks[1]]
+            ]
+            move = 'white'
+            promotion = 'no promotion'
             nickname = welcomeWindow.loggedUser
+            pygame.init()
             window = Window()
             menu()
             welcomeWindow.startGame = False
