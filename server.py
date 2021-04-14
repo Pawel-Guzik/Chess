@@ -1,48 +1,22 @@
 import socket
 from _thread import *
-from time import sleep
 from gui import db
 from game import Game
+
 SERVER = socket.gethostbyname(socket.gethostname())
 PORT = 5555
 ADDR = (SERVER, PORT)
-
-
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     server.bind(ADDR)
 except socket.error as e:
     str(e)
 
-def timer(player):
-    global turn, players, pTimes
-    seconds = 10*60
-    while seconds > 0:
-        if players[player] == turn:
-            pTimes[player] -= 1
-            sleep(1)
-
-
-# pTimes = [600, 600]
-# players = ['white', 'black']
-# was_moving = []
-# move = ''
-# turn = 'white'
-# isPromotion = False
-# promoFigure = ' '
-# asked = []
-# nicknames = []
-# winner = ''
-
-
-# def encodeTime(times):
-#     return str(times[0]) + ' ' + str(times[1])
-
 
 def writeResultTodatabase(winner, nicknames):
     mycursor = db.cursor()
     values = (nicknames[0], nicknames[1], nicknames[winner])
-    mycursor.execute("INSERT INTO game_history (P1_nick, P2_nick, winner) VALUES (%s,%s,%s)",values)
+    mycursor.execute("INSERT INTO game_history (P1_nick, P2_nick, winner) VALUES (%s,%s,%s)", values)
     db.commit()
     mycursor.execute("SELECT nickname, points FROM user WHERE nickname IN (%s, %s)", (nicknames[0], nicknames[1]))
     records = mycursor.fetchall()
@@ -56,12 +30,11 @@ def writeResultTodatabase(winner, nicknames):
         mycursor.execute("UPDATE user SET points = %s WHERE nickname = %s", (points, x[0]))
         db.commit()
 
+
 def thrededClient(conn, addr, player, gameId):
-    # global move, turn, was_moving, currentPlayer, isPromotion, promoFigure, asked, nicknames, winner
     global games
     print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(games[gameId].players[player]))
-
 
     while True:
         try:
@@ -85,8 +58,8 @@ def thrededClient(conn, addr, player, gameId):
                 elif data == 'pTimes':
                     reply = games[gameId].encodeTime()
                 elif data == 'ready':
-                    print(player)
-                    if games[gameId].areTwoPlayers == True:
+
+                    if games[gameId].areTwoPlayers:
                         reply = 'True'
                         start_new_thread(games[gameId].timer, (player,))
                     else:
@@ -119,7 +92,7 @@ def thrededClient(conn, addr, player, gameId):
                 elif data == 'black won':
                     if games[gameId].winner == '':
                         games[gameId].winner = 1
-                        writeResultTodatabase(games[gameId].winner,games[gameId].nicknames)
+                        writeResultTodatabase(games[gameId].winner, games[gameId].nicknames)
 
                 else:
                     games[gameId].move = data
@@ -137,9 +110,7 @@ def thrededClient(conn, addr, player, gameId):
         except:
             break
 
-    print("Lost connection")
     conn.close()
-
 
 
 games = {}
@@ -148,7 +119,7 @@ while True:
     server.listen()
     idCounter += 1
     conn, addr = server.accept()
-    gameId = int((idCounter - 1)/2)
+    gameId = int((idCounter - 1) / 2)
 
     if idCounter % 2 == 1:
         player = 0
@@ -156,6 +127,5 @@ while True:
     else:
         player = 1
         games[gameId].areTwoPlayers = True
-
 
     start_new_thread(thrededClient, (conn, addr, player, gameId))

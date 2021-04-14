@@ -5,9 +5,7 @@ from Window import Window
 from gui import Gui
 
 
-
 def choseFigure(click, network):
-
     if 720 <= click[0] < 810:
         if 270 <= click[1] < 360:
             network.send('queen')
@@ -56,15 +54,6 @@ def clickNavi(mouseposition):
             y = a
             break
     return y, x
-
-
-def isPromotion(figLoc, fieldLoc):
-    fig = type(board[figLoc[0]][figLoc[1]])
-    if fig == Pawn and board[figLoc[0]][figLoc[1]].color == 'white' and fieldLoc[0] == 0:
-        return True
-    elif fig == Pawn and board[figLoc[0]][figLoc[1]].color == 'black' and fieldLoc[0] == 7:
-        return True
-    return False
 
 
 def moveFigure(figLoc, fieldLoc):
@@ -122,11 +111,6 @@ def isPromotion (figLoc, fieldLoc):
         return True
     return False
 
-
-move = 'white'
-promotion = 'no promotion'
-
-# def choosePromoFigure(click)
 
 def promotPawn(fieldLoc, promo_figure, move):
     if move == 'white':
@@ -244,20 +228,19 @@ def game():
             locations = {'figure': False, 'field': False}
             move = change_move[move]
 
-        if black_king.isCheckMate(board):
-            network.send('white won')
-            # pygame.quit()
-            break
-        if white_king.isCheckMate(board):
-            network.send('black won')
-            # pygame.quit()
-            break
-
-        if nicknames == []:
+        if not nicknames:
             nicknames = network.send('nicknames')
 
         pTimes = decodeTime(network.send('pTimes'))
+
         window.drawBoard(possibleMoves, board, locations, moveLoc, pTimes, nicknames)
+        if black_king.isCheckMate(board) or pTimes[1] == 0:
+            network.send('white won')
+            break
+        if white_king.isCheckMate(board) or pTimes[0] == 0:
+            network.send('black won')
+            break
+
 
 welcomeWindow = Gui()
 welcomeWindow.place(relx=.5, rely=.5, anchor="center")
@@ -268,10 +251,13 @@ while loop_active:
 
     if not welcomeWindow.isRunning:
         welcomeWindow.root.destroy()
+        loop_active = False
         break
     else:
-        welcomeWindow.root.update()
-
+        try:
+            welcomeWindow.root.update()
+        except:
+            break
         if welcomeWindow.startGame:
             black_rooks = [Rook('black', 0, 0, 'img/C_Wieza.png'), Rook('black', 630, 0, 'img/C_Wieza.png')]
             black_knight = [Knight('black', 90, 0, 'img/C_Kon.png'), Knight('black', 540, 0, 'img/C_Kon.png')]
@@ -310,9 +296,8 @@ while loop_active:
             menu()
             welcomeWindow.startGame = False
 
-        elif welcomeWindow.visible == False:
+        elif not welcomeWindow.visible:
             welcomeWindow.visible = True
-
             welcomeWindow.root.deiconify()
             welcomeWindow.resetGrid()
             welcomeWindow.login()
