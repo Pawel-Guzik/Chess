@@ -170,8 +170,6 @@ def game():
         window.waitingForPlayer()
         isOpponent = x(network.send('ready'))
 
-    print("Player ", p1Color)
-
     while run:
         clock.tick(60)
 

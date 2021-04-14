@@ -26,29 +26,24 @@ def writeResultTodatabase(winner, nicknames):
             points += 9
         else:
             points -= 9
-            print(x[0], points)
         mycursor.execute("UPDATE user SET points = %s WHERE nickname = %s", (points, x[0]))
         db.commit()
 
 
 def thrededClient(conn, addr, player, gameId):
     global games
-    print(f'[NEW CONNECTION] {addr} connected')
     conn.send(str.encode(games[gameId].players[player]))
 
     while True:
         try:
             data = conn.recv(2048).decode()
-            print(data)
             if not data:
-                print("Disconnected")
                 break
             else:
                 if data == 'waiting':
                     if games[gameId].move == '':
                         reply = 'waiting'
                     else:
-
                         if player in games[gameId].was_moving:
                             reply = 'waiting'
                         else:

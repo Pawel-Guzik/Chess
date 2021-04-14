@@ -9,8 +9,6 @@ class Network:
         self.port = 5555
         self.addr = (self.server, self.port)
         self.color = self.connect()
-        # print(self.color)
-
 
     def connect(self):
         try:

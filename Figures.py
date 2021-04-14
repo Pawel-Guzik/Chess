@@ -278,7 +278,6 @@ class Queen(Rook, Bishop):
         rookMoves = Rook.possibleMoves(self, locations, board)
         bishopMoves = Bishop.possibleMoves(self, locations, board)
         possibleMoves = rookMoves + bishopMoves
-        # print(possibleMoves)
         return possibleMoves
 
 
@@ -328,7 +327,6 @@ class King(Figure):
         cas = self.castling(locations, board)
         if cas:
             possibleMoves.extend(cas)
-        print(possibleMoves)
         return possibleMoves
 
     def isCheck(self, board, location):
@@ -338,11 +336,9 @@ class King(Figure):
             colors = {'friendly': 'white', 'opponent': 'black'}
 
         opponentMoves = opponentPossibleMoves(board, colors)
-        # print(opponentMoves)
-        # print(location)
+
         for a, b in opponentMoves:
             if (a, b) == location:
-                # print('szach')
                 return True
         return False
 
@@ -362,7 +358,6 @@ class King(Figure):
                         possibleMoves = isMoveCorrect(moves, locations['figure'], board)
                         if len(possibleMoves) > 0:
                             return False
-        print(f'{self.color} sszach mat')
         return True
 
     @staticmethod
@@ -387,7 +382,6 @@ class King(Figure):
                     if board[kingLoc[0]][kingLoc[1]-4].color == self.color and not board[kingLoc[0]][kingLoc[1]-4].was_moving:
                         m = [(kingLoc[0], kingLoc[1]-1), (kingLoc[0], kingLoc[1]-2)]
                         moves = isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
-                        # print(moves)
                         if len(moves) == 2:
 
                             possibleMoves.append(moves[1])
@@ -397,7 +391,6 @@ class King(Figure):
                     if board[kingLoc[0]][kingLoc[1]+3].color == self.color and not board[kingLoc[0]][kingLoc[1]+3].was_moving:
                         m = [(kingLoc[0], kingLoc[1]+1), (kingLoc[0], kingLoc[1]+2)]
                         moves = isMoveCorrect(m, (kingLoc[0], kingLoc[1]), board)
-                        # print(moves)
                         if len(moves) == 2:
                             possibleMoves.append(moves[1])
         return possibleMoves
